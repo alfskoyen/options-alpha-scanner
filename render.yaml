@@ -1,0 +1,28 @@
+# render.yaml
+# ────────────────────────────────────────────────────────────────
+# Render.com deployment configuration.
+# Connect your GitHub repo in the Render dashboard and this file
+# handles the rest automatically.
+#
+# Free tier notes:
+#   - Service spins down after 15 min of inactivity
+#   - First request after spin-down takes ~30 seconds to cold start
+#   - 512MB RAM on free tier — sufficient for this app
+#
+# To deploy:
+#   1. Push this repo to GitHub
+#   2. Go to render.com → New → Web Service
+#   3. Connect your GitHub repo
+#   4. Render reads this file automatically
+# ────────────────────────────────────────────────────────────────
+
+services:
+  - type: web
+    name: options-screener
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:server --workers 1 --threads 2 --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+    autoDeploy: true   # auto-deploy on every GitHub push
