@@ -22,6 +22,7 @@ Data:
     See data.py and README.md for the full data pipeline description.
 """
 
+import os
 import dash
 import dash_bootstrap_components as dbc
 from dash import Input, Output, dcc, html
@@ -741,5 +742,10 @@ register_table_callbacks(app, df)
 # ── Run ───────────────────────────────────────────────────────────
 # if __name__ == "__main__":
 #     app.run(debug=True, port=8050)
+# if __name__ == "__main__":
+#     app.run(debug=True, host='127.0.0.1', port=8050)
 if __name__ == "__main__":
-    app.run(debug=True, host='127.0.0.1', port=8050)
+port = int(os.environ.get("PORT", 8050))
+app.run(debug=False, host="0.0.0.0", port=port)
+
+    
