@@ -1,5 +1,5 @@
 <div align="center">
-<img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/options_scan_scatter_3.13.png?raw=true"alt="asdfdsa" width="700"/>
+<img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/options_scan_scatter_3.13.png?raw=true"alt="asdfdsa" width="1200"/>
 <p><em>Figure: Premium to Risk Spread Scatter-Plot of Global Universe of Put Options.</em></p>
 </div>
 
