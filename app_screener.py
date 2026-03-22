@@ -347,7 +347,8 @@ scatter_tab = html.Div(style={"paddingTop": "16px"}, children=[
             ),
         ]),
     ]),
-    dcc.Graph(id="graph-scatter", config={"displayModeBar": False}),
+    # dcc.Graph(id="graph-scatter", config={"displayModeBar": True}),
+    dcc.Graph(id="graph-scatter"),
 ])
 
 
