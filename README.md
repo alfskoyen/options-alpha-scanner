@@ -17,7 +17,7 @@
   <p><em>Figure: Premium to Risk Spread Scatter-Plot of Global Universe of Put Options.</em></p>
 </div>
 
-## &nbsp;  Hello, I'm Alfred Haugen. Welcome to my Git.
+## &nbsp;  Option / Put Alpha Analysis and Dashboard Project
 
 Since 2019, I've been bridging my extensive background in **risk and audit leadership** with machine learning and algorithmic design, applying **ML and AI** to solve complex, real-world problems. I recently completed my **M.S. in Data Science** at the University of Virginia's School of Data Science (August 2025), building on prior machine learning studies at **Georgetown University** in 2020.
 
