@@ -55,36 +55,65 @@ The pipeline is multi-phased and accomplishes several data capture, wrangilng an
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  1. API LAYER           av_api_calls.py              │
-│     Alpha Vantage → options chain + daily prices     │
-│     Rate-limited batching, error handling            │
+│  1. API LAYER           av_api_calls.py             │
+│     Alpha Vantage → options chain + daily prices    │
+│     Rate-limited batching, error handling           │
 │     SPY/QQQ benchmark HV computed once pre-loop     │
 └────────────────────┬────────────────────────────────┘
                      │
 ┌────────────────────▼────────────────────────────────┐
-│  2. PREMIUM LAYER   option_prem_iv_builder_V.py      │
-│     Delta-bucketed put/call premium per DTE window   │
-│     ATM straddle + 3 efficiency metrics              │
-│     Normalized by spot price (cross-ticker)          │
+│  2. PREMIUM LAYER   option_prem_iv_builder.py       │
+│     Delta-bucketed put/call premium per DTE window  │
+│     ATM straddle + 3 efficiency metrics             │
+│     Normalized by spot price (cross-ticker)         │
 └────────────────────┬────────────────────────────────┘
                      │
 ┌────────────────────▼────────────────────────────────┐
-│  3. RISK LAYER      hist_vol_iv_risk_builder_III.py  │
+│  3. RISK LAYER      hist_vol_iv_risk_builder.py     │
 │     HV_20 / HV_30 / HV_60 from daily log returns    │
-│     IV/HV ratios per DTE window                      │
-│     Spike analysis — self-relative + universe        │
-│     Relative vol vs SPY and QQQ                      │
+│     IV/HV ratios per DTE window                     │
+│     Spike analysis — self-relative + universe       │
+│     Relative vol vs SPY and QQQ                     │
 └────────────────────┬────────────────────────────────┘
                      │
 ┌────────────────────▼────────────────────────────────┐
-│  4. SCORING LAYER   score_universe_IV.py             │
-│     Premium Score + Risk Score (StandardScaler)      │
-│     Term structure regression slopes                 │
-│     Premium efficiency signals per DTE               │
-│     Quadrant assignment (median split)               │
-│     Universe-relative percentile ranks               │
+│  4. SCORING LAYER   score_universe.py               │
+│     Premium Score + Risk Score (StandardScaler)     │
+│     Term structure regression slopes                │
+│     Premium efficiency signals per DTE              │
+│     Quadrant assignment (median split)              │
+│     Universe-relative percentile ranks              │
 └─────────────────────────────────────────────────────┘
 ```
+
+---
+
+## 3. Data Sources & API Pipeline
+
+### Data Source
+
+**Alpha Vantage Premium API** — two endpoints per symbol per run:
+
+| Endpoint | Purpose | Key Fields Used |
+|---|---|---|
+| `HISTORICAL_OPTIONS` | Options chain snapshot for a specific date | strike, bid, ask, IV, delta, vega, OI, expiration |
+| `TIME_SERIES_DAILY` | Daily closing prices for HV computation | `4. close` |
+
+
+
+### API Design Decisions
+
+**Historical vs Realtime options:** `HISTORICAL_OPTIONS` is used rather than `REALTIME_OPTIONS` because it allows point-in-time analysis with a specific `date` parameter — critical for backtesting and for ensuring the HV window and options chain are synchronized to the same date.
+
+**`outputsize=compact`:** Returns the last 100 trading days of price history — sufficient for HV_60 (60 trading days minimum) while keeping API response times fast.
+
+**Spot price derivation:** Spot is pulled from `TIME_SERIES_DAILY` at the `as_of_date` close, not from the options chain. This ensures the spot used for normalization is the actual closing price, not an inferred mid-market from the chain.
+
+**Rate limiting:** Alpha Vantage Premium allows 75 calls/minute. Each symbol requires 2 calls (options + prices). The loop batches 37 symbols per minute with a 61-second pause between batches.
+
+**Benchmark pre-fetch:** SPY and QQQ are fetched once before the main loop. Their `HV_30` values are used to compute `relative_vol_spy` and `relative_vol_qqq` for every symbol in the universe — adding these to the loop would cost 4 extra calls per symbol.
+
+**Error handling:** Failed symbols are logged to `error_log_df` with the raw AV response keys captured — distinguishing between rate limit responses (`Information` key), per-minute throttles (`Note` key), and invalid symbols (`Error Message` key).
 
 ---
 
