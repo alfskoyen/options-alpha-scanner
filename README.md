@@ -5,7 +5,7 @@
 
 <div align="center">
   <a href="https://raw.githubusercontent.com/alfskoyen/options-alpha-scanner/main/assets/opt_scan_scatter_3.13.png">
-    <img src="https://raw.githubusercontent.com/alfskoyen/options-alpha-scanner/main/assets/opt_scan_scatter_3.13.png" alt="Premium to Risk Scatter" width="900"/>
+    <img src="https://raw.githubusercontent.com/alfskoyen/options-alpha-scanner/main/assets/opt_scan_scatter_3.13.png" alt="Premium to Risk Scatter" width="1500"/>
   </a>
   <p><em>Figure: Premium to Risk Spread Scatter-Plot of Global Universe of Put Options.</em></p>
 </div>
