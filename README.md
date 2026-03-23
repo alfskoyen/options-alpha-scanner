@@ -434,12 +434,6 @@ Saved as `data/scored_master_{option_date}.csv` — one file per run, date-stamp
 ---
 
 ### Dashboard
-Scoring and metric outputs from the model are visualized across a five sectional dasbhaaord.
-The dashboard convesys the glboal universe of symbols through the 
-
----
-
-## 8. Dashboard
 
 Scoring and metric outputs from the model are visualized across a five-section interactive 
 dashboard built in Plotly. The dashboard is designed to move from the macro universe view 
@@ -460,7 +454,7 @@ any point surfaces key metrics including IV/HV ratio, spike signal, relative vol
 straddle premium, and term structure divergence.
 
 <div align="center">
-<img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_bar_prem_3.13.png?raw=true" alt="Premium to Risk Scatter — Global Universe" width="1500"/>
+<img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_scatter_3.13.png?raw=true" alt="Premium to Risk Scatter — Global Universe" width="1500"/>
 <p><em>Figure 1: Premium vs Risk scatter across the full ~600 symbol universe. Each point 
 represents one symbol, colored by quadrant. Q1 (top-left) symbols offer the highest premium 
 relative to their risk score — the primary target zone for put-selling.</em></p>
@@ -478,10 +472,31 @@ surfaces IV/HV ratio, spike signal, and premium efficiency metrics without leavi
 enabling rapid triage across dozens of candidates.
 
 <div align="center">
-<img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_histo_risk_3.13.png?raw=true" alt="Ranked Bar Chart — Risk Score" width="1500"/>
+<img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_bar_prem_3.13.png?raw=true" alt="Ranked Bar Chart — Risk Score" width="1500"/>
 <p><em>Figure 2: Ranked bar chart view showing the lowest risk score symbols across the 
 universe. Bar color reflects quadrant membership — Q1 names (mint) in a low-risk ranking 
 represent the cleanest put-selling setups where premium and safety align.</em></p>
+</div>
+
+---
+### Global Distributions — Preset Scenarios
+
+### Global Distributions — Universe Metric Histograms
+
+The distributions panel provides a macro-level view of how key metrics are spread across 
+the full universe — premium levels, HV, IV/HV ratios, and spike activity. Histograms make 
+it immediately visible whether the current vol environment is broadly elevated or compressed, 
+whether premium is concentrated in a few outlier symbols or evenly distributed, and where 
+a specific symbol sits on each curve relative to the population. This view is particularly 
+useful for calibrating expectations — a symbol with `HV_30_pct = 0.92` reads very 
+differently when you can see the full distribution shape behind it.
+
+<div align="center">
+<img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_histo_risk_3.13.png?raw=true" alt="Universe Metric Distributions" width="1500"/>
+<p><em>Figure 3: Histogram distributions of key risk and premium metrics across the full 
+universe. The shape of these distributions shifts with the vol regime — compressed 
+distributions indicate a calm market, fat right tails indicate elevated fear or idiosyncratic 
+stress concentrated in specific sectors.</em></p>
 </div>
 
 ---
