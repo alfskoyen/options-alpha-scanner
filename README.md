@@ -27,6 +27,14 @@ Welcome to a Demo of the Bi-Dimensional Options Scanner
 
 ---
 
+<div align="center">
+
+[![Dashboard Preview](assets/opt_scan_scatter_3.13.png)](https://options-alpha-scanner.onrender.com)
+
+[![Live Demo](https://img.shields.io/badge/🚀%20OPEN%20LIVE%20DASHBOARD-4dd9d9?style=for-the-badge)](https://options-alpha-scanner.onrender.com)
+
+</div>
+
 ## Table of Contents
 
 1. [Objective & North Star](#1-objective--north-star)
