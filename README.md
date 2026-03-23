@@ -24,6 +24,13 @@
 > **Active development** — working pipeline scanning ~600 symbols. 
 > Scoring methodology and dashboard under continuous iteration.
 
+
+--- 
+
+Welcome
+
+[![Live Demo](https://img.shields.io/badge/Live-Demo-4dd9d9?style=for-the-badge&logo=render)](https://options-alpha-scanner.onrender.com)
+
 ---
 
 # Options Analytics Dashboard
@@ -669,4 +676,5 @@ ALPHA_VANTAGE_API_KEY=your_key_here
 
 Welcome
 
-[![Live Demo](https://img.shields.io/badge/Live-Demo-4dd9d9?style=for-the-badge)]([https://your-app-name.onrender.com](https://options-alpha-scanner.onrender.com))
+[![Live Demo](https://img.shields.io/badge/Live-Demo-4dd9d9?style=for-the-badge&logo=render)](https://options-alpha-scanner.onrender.com)
+
