@@ -99,33 +99,51 @@ The pipeline is multi-phased and accomplishes several data capture, wrangilng an
 | `HISTORICAL_OPTIONS` | Options chain snapshot for a specific date | strike, bid, ask, IV, delta, vega, OI, expiration |
 | `TIME_SERIES_DAILY` | Daily closing prices for HV computation | `4. close` |
 
-  #### TIME_SERIES_DAILY
-  dict_keys(['Meta Data', 'Time Series (Daily)'])
+---
 
-  {
+#### `TIME_SERIES_DAILY` — Response Structure
+
+*Two top-level keys are returned. `Meta Data` describes the request context.
+`Time Series (Daily)` contains the price history keyed by date string,
+newest first. Only `4. close` is used — pulled at `as_of_date` for spot price
+and across the full compact window (100 days) for HV computation.*
+```python
+dict_keys(['Meta Data', 'Time Series (Daily)'])
+```
+
+**Meta Data**
+```json
+{
     "1. Information": "Daily Prices (open, high, low, close) and Volumes - DATA DELAYED BY 15 MINUTES",
-    "2. Symbol": "TQQQ",
+    "2. Symbol":      "TQQQ",
     "3. Last Refreshed": "2026-03-20",
     "4. Output Size": "Compact",
-    "5. Time Zone": "US/Eastern"
+    "5. Time Zone":   "US/Eastern"
 }
+```
 
+**Time Series (Daily)** — *one entry per trading day, newest first*
+```json
 {
     "2026-03-20": {
-        "1. open": "45.1800",
-        "2. high": "45.2100",
-        "3. low": "42.3000",
-        "4. close": "43.0800",
+        "1. open":   "45.1800",
+        "2. high":   "45.2100",
+        "3. low":    "42.3000",
+        "4. close":  "43.0800",
         "5. volume": "137952495"
     },
     "2026-03-19": {
-        "1. open": "44.8700",
-        "2. high": "46.3200",
-        "3. low": "44.3000",
-        "4. close": "45.6900",
+        "1. open":   "44.8700",
+        "2. high":   "46.3200",
+        "3. low":    "44.3000",
+        "4. close":  "45.6900",
         "5. volume": "138384909"
     }
 }
+```
+
+> **Pipeline usage:** `spot = float(daily_data['Time Series (Daily)'][as_of_date]['4. close'])`
+> HV is computed from the full series via `parse_daily_closes()` which truncates at `as_of_date`.
 
 
 ### API Design Decisions
