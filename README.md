@@ -257,7 +257,7 @@ from raw API data before the scores are combined in the Scoring Model (Section 5
 
 ---
 
-#### 3a. _Premium Dimension_
+### 3a. _Premium Dimension_
 
 ### DTE Windows
 
@@ -322,7 +322,7 @@ Each DTE window receives a categorical label combining IV/HV ratio and efficienc
 
 ---
 
-#### _3b. Risk Dimension_
+### _3b. Risk Dimension_
 
 ### Historical Volatility
 
