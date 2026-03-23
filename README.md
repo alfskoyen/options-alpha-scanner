@@ -17,6 +17,17 @@
   <p><em>Figure: Premium to Risk Spread Scatter-Plot of Global Universe of Put Options.</em></p>
 </div>
 
+![Status](https://img.shields.io/badge/status-beta-orange)
+![Python](https://img.shields.io/badge/python-3.11-blue)
+![Data](https://img.shields.io/badge/data-Alpha%20Vantage-green)
+
+> **Active development** — working pipeline scanning ~600 symbols. 
+> Scoring methodology and dashboard under continuous iteration.
+
+---
+
+# Options Analytics Dashboard
+
 ## &nbsp;  Option / Put Alpha Analysis and Dashboard Project
 ### A quantitative put-selling opportunity scanner across ~600 NYSE & Nasdaq symbols
 
