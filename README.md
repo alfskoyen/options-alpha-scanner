@@ -467,8 +467,8 @@ Positive divergence means premium is growing faster across DTE than IV implies â
 
 The pipeline is multi-phased and accomplishes several goals including data capture, wrangilng and creation steps in four sequential layers.
 Our Beta run of the pipeline is executed in a Jupyter Notebook holding certain key parameters for the output file.
-[:abacus: Dynamic Programming & Time Complexity Analysis](https://github.com/alfskoyen/alfskoyen/blob/main/support/Gerrymander_Problem_Haugen.ipynb)
-[:abacus: Options Analysis Pipeline Execution](https://github.com/alfskoyen/options-alpha-scanner/tree/main/notebooks/options_scoring_pipeline.ipynb)
+
+[:abacus: Options Analysis Pipeline Execution](https://github.com/alfskoyen/options-alpha-scanner/blob/main/notebooks/options_scoring_pipeline.ipynb)
 
 
 ```
