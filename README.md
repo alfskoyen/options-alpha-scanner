@@ -255,7 +255,6 @@ the universe median on each axis.
 *The two sub-layers below — Premium (4a) and Risk (4b) — describe how each axis is built
 from raw API data before the scores are combined in the Scoring Model (Section 5).*
 
----
 
 ### 3a. _Premium Dimension_
 
@@ -320,7 +319,6 @@ Each DTE window receives a categorical label combining IV/HV ratio and efficienc
 | Cheap + Efficient | ratio < 1.20 AND prem_per_iv ≥ 0.60 |
 | Cheap + Thin | ratio < 1.20 AND prem_per_iv < 0.60 |
 
----
 
 ### _3b. Risk Dimension_
 
@@ -658,11 +656,7 @@ ALPHA_VANTAGE_API_KEY=your_key_here
 ```
 
 ---
-
 *Built for systematic put-selling opportunity identification across the US equity universe.*
 
 
-Welcome
-
-[![Live Demo](https://img.shields.io/badge/Live-Demo-4dd9d9?style=for-the-badge&logo=render)](https://options-alpha-scanner.onrender.com)
 
