@@ -189,7 +189,7 @@ from raw API data before the scores are combined in the Scoring Model (Section 5
 
 ---
 
-### 4a. Premium Layer
+### 4a. Premium Dimension
 
 ### DTE Windows
 
@@ -254,7 +254,7 @@ Each DTE window receives a categorical label combining IV/HV ratio and efficienc
 
 ---
 
-## 5. Risk Layer
+## 4b. Risk Dimension
 
 ### Historical Volatility
 
@@ -300,6 +300,78 @@ relative_vol_spy = symbol_HV_30 / spy_HV_30
 ```
 
 Values above 1.0 mean the symbol is moving more than the broad market. This separates idiosyncratic vol from systematic vol — a stock moving 3× SPY in the same market environment carries fundamentally different put-selling risk than one moving 1.2×.
+
+---
+
+## 5. Scoring Model
+
+### Premium Score
+
+Combines a raw premium composite and an efficiency composite, both standardized:
+
+```
+raw_score = Σ (DTE_weight × Σ (bucket_weight × premium_{bucket}_{dte}))
+eff_score = Σ (DTE_weight × prem_per_iv_primary_{dte})
+
+premium_score = StandardScaler(0.60 × raw_score + 0.40 × eff_score)
+```
+
+**DTE weights** (shorter term weighted higher — theta focus):
+
+| DTE | Weight |
+|---|---|
+| 14 | 0.50 |
+| 30 | 0.30 |
+| over60_1 | 0.15 |
+| over60_2 | 0.05 |
+
+**Strike bucket weights** (rewards OTM premium — ATM is always available, the signal is in Slight/Moderate):
+
+| Bucket | Weight |
+|---|---|
+| ATM | 0.20 |
+| Slight | 0.40 |
+| Moderate | 0.30 |
+| Far | 0.15 |
+
+### Risk Score
+
+Four components standardized and weighted:
+
+```
+risk_score = 0.20 × iv_hv_component
+           + 0.25 × hv_30_component
+           + 0.40 × spike_component
+           + 0.15 × slope_component
+```
+
+| Component | Construction | Direction |
+|---|---|---|
+| iv_hv_ratio | Asymmetric — IV < HV penalized 2× harder (cheap IV = dangerous complacency) | Higher = more risk |
+| hv_30 | Raw HV_30 value — absolute vol level | Higher = more risk |
+| spike_ratio | Blended 30/60d frequency × log(magnitude) | Higher = more risk |
+| slope | ratio_14 − ratio_over60_1 — inverted term structure signals near-term stress | Higher = more risk |
+
+### Quadrant Assignment
+
+Median split on both axes across the scanned universe:
+
+| Quadrant | Condition | Interpretation |
+|---|---|---|
+| Q1 High Premium / Low Risk | premium ≥ median AND risk < median | Target — best put-selling setups |
+| Q2 High Premium / High Risk | premium ≥ median AND risk ≥ median | Premium available but vol environment is dangerous |
+| Q3 Low Premium / Low Risk | premium < median AND risk < median | Safe but nothing to collect |
+| Q4 Low Premium / High Risk | premium < median AND risk ≥ median | Avoid |
+
+### Term Structure
+
+Linear regression slope of bucket-weighted premium and ATM IV across all 4 DTE windows, using nominal DTE values as x-axis `[14, 30, 63, 91]`. Requires minimum 3 of 4 DTE windows populated.
+
+```
+slope_divergence = premium_slope − iv_slope
+```
+
+Positive divergence means premium is growing faster across DTE than IV implies — an opportunity signal. All slopes are percentile-ranked vs universe.
 
 ---
 
