@@ -437,6 +437,93 @@ Saved as `data/scored_master_{option_date}.csv` — one file per run, date-stamp
 Scoring and metric outputs from the model are visualized across a five sectional dasbhaaord.
 The dashboard convesys the glboal universe of symbols through the 
 
+---
+
+## 8. Dashboard
+
+Scoring and metric outputs from the model are visualized across a five-section interactive 
+dashboard built in Plotly. The dashboard is designed to move from the macro universe view 
+down to individual symbol detail — starting with where every symbol sits in the two-dimensional 
+scoring space, then drilling into ranked opportunity lists, term structure patterns, and raw 
+metric tables for deeper due diligence.
+
+---
+
+### Global Universe Scatter — Premium vs Risk
+
+The primary view places every symbol in the scanned universe onto the two-dimensional 
+premium/risk plane. Each point is colored by quadrant — Q1 (mint, target), Q2 (amber, 
+rich but risky), Q3 (steel, low opportunity), Q4 (red, avoid). Quadrant dividers are drawn 
+at the universe median on each axis. The top symbols by combined score are labeled directly 
+on the chart, making the best setups immediately visible without any filtering. Hovering over 
+any point surfaces key metrics including IV/HV ratio, spike signal, relative vol vs SPY, 
+straddle premium, and term structure divergence.
+
+<div align="center">
+<img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_bar_prem_3.13.png?raw=true" alt="Premium to Risk Scatter — Global Universe" width="1500"/>
+<p><em>Figure 1: Premium vs Risk scatter across the full ~600 symbol universe. Each point 
+represents one symbol, colored by quadrant. Q1 (top-left) symbols offer the highest premium 
+relative to their risk score — the primary target zone for put-selling.</em></p>
+</div>
+
+---
+
+### Ranked Bar Charts — Preset Scenarios
+
+A suite of horizontal bar charts rank symbols by specific metrics across user-defined 
+scenarios — highest premium score, lowest risk score, highest straddle premium, steepest 
+term structure divergence, and per-quadrant deep dives. Each bar is colored by the symbol's 
+quadrant so the risk context is immediately visible alongside the ranking. Rich hover data 
+surfaces IV/HV ratio, spike signal, and premium efficiency metrics without leaving the chart, 
+enabling rapid triage across dozens of candidates.
+
+<div align="center">
+<img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_histo_risk_3.13.png?raw=true" alt="Ranked Bar Chart — Risk Score" width="1500"/>
+<p><em>Figure 2: Ranked bar chart view showing the lowest risk score symbols across the 
+universe. Bar color reflects quadrant membership — Q1 names (mint) in a low-risk ranking 
+represent the cleanest put-selling setups where premium and safety align.</em></p>
+</div>
+
+---
+
+### Term Structure View — ATM Premium Slope by Quadrant
+
+The term structure panel surfaces how premium and IV grow as expiration extends from 14 
+to 90+ days. Steeper premium slopes indicate more reward for selling further-dated options. 
+The slope divergence metric — premium slope minus IV slope — identifies symbols where 
+premium is outpacing what the vol environment implies, flagging underpriced term structure 
+as an additional opportunity signal. Views are filterable by quadrant, allowing focused 
+analysis within Q1 or Q2 names specifically.
+
+<div align="center">
+<img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_term_q3_atm_prem_3.13.png?raw=true" alt="Term Structure — ATM Premium Slope" width="1500"/>
+<p><em>Figure 3: Term structure view showing ATM premium across DTE windows for top Q1 
+symbols. Steeper slopes indicate greater reward for selling longer-dated options. The 
+divergence between premium slope and IV slope is the key signal — positive divergence 
+means the market is paying above what vol implies.</em></p>
+</div>
+
+---
+
+### Raw Metrics Table
+
+The metrics table provides full access to the underlying data for any symbol — every 
+premium bucket, IV/HV ratio, spike metric, efficiency signal, and percentile rank in a 
+single scrollable view. Sortable by any column, the table supports manual due diligence 
+on any candidate surfaced by the scatter or bar views. The `prem_efficiency_signal` 
+categorical columns per DTE window give an at-a-glance summary of whether each expiration 
+window is Rich or Cheap, Efficient or Thin.
+
+<div align="center">
+<img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_table_3.13.png?raw=true" alt="Raw Metrics Table" width="1500"/>
+<p><em>Figure 4: Full metrics table showing all scoring outputs per symbol. Sortable by any 
+column — premium buckets, IV/HV ratios, spike signals, term structure slopes, and efficiency 
+metrics are all accessible for manual review and validation of model-surfaced candidates.</em></p>
+</div>
+
+
+
+
 <div align="center">
 <img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_bar_prem_3.13.png?raw=true"alt="asdfdsa" width="1500"/>
 <p><em>Figure: Premium to Risk Spread Scatter-Plot of Global Universe of Put Options.</em></p>
