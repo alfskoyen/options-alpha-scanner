@@ -99,6 +99,33 @@ The pipeline is multi-phased and accomplishes several data capture, wrangilng an
 | `HISTORICAL_OPTIONS` | Options chain snapshot for a specific date | strike, bid, ask, IV, delta, vega, OI, expiration |
 | `TIME_SERIES_DAILY` | Daily closing prices for HV computation | `4. close` |
 
+  #### TIME_SERIES_DAILY
+  dict_keys(['Meta Data', 'Time Series (Daily)'])
+
+  {
+    "1. Information": "Daily Prices (open, high, low, close) and Volumes - DATA DELAYED BY 15 MINUTES",
+    "2. Symbol": "TQQQ",
+    "3. Last Refreshed": "2026-03-20",
+    "4. Output Size": "Compact",
+    "5. Time Zone": "US/Eastern"
+}
+
+{
+    "2026-03-20": {
+        "1. open": "45.1800",
+        "2. high": "45.2100",
+        "3. low": "42.3000",
+        "4. close": "43.0800",
+        "5. volume": "137952495"
+    },
+    "2026-03-19": {
+        "1. open": "44.8700",
+        "2. high": "46.3200",
+        "3. low": "44.3000",
+        "4. close": "45.6900",
+        "5. volume": "138384909"
+    }
+}
 
 
 ### API Design Decisions
