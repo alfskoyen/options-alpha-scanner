@@ -61,8 +61,10 @@ Review a Demo of the Options Premium & Risk Model · Live Screening Dashboard --
 
 ---
 ## 1. Objective & North Star
-The core objective of this project is to systematically and directionally identify improved put-selling opportunities across the US equity universe on any given trading day. 
-Rather than monitoring only a handful of exhange tickers using limited metrics, this framework builds a two-dimensional viewpoint for every symbol scoring a) how much premium is available in comparison to the present market and volatility profile and b) how much risk is embedded in the vol environment, quickly scoring and placing the global set into a quadrant based profile. 
+The primary objective of this project is to systematically identify improved put-selling opportunities across the US equity universe on any given trading day. 
+Rather than monitoring only a handful of exhange symbols using a limited set of metrics, this framework builds a two-dimensional scoring model for the global universe of equities; scoring 
+- how much premium is available in comparison to the present market and volatility profile, and
+- how much risk is embedded in the vol environment, quickly scoring and placing the global set into a quadrant based profile. 
 
 **Our north star is Q1: High Premium / Low Risk.**
 
