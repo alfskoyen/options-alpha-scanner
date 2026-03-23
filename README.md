@@ -19,13 +19,26 @@
 &nbsp; A quantitative put-selling opportunity scanner across ~600 NYSE & Nasdaq symbols
 
 ---
-Welcome to a Demo of the Bi-Dimensional Options Scanner
+Welcome to a Demo of the Options Premium & Risk Model · Live Screening Dashboard
 
 <div align="center">
 
+<a href="https://options-alpha-scanner.onrender.com" target="_blank">
+  <img src="assets/opt_scan_scatter_3.13.png" alt="Dashboard Preview" width="100%">
+</a>
+
+<a href="https://options-alpha-scanner.onrender.com" target="_blank">
+  <img src="https://img.shields.io/badge/🚀%20OPEN%20LIVE%20DASHBOARD-4dd9d9?style=for-the-badge" alt="Live Demo">
+</a>
+
+</div>
+
+
+<!-- <div align="center">
+
 [![Dashboard Preview](assets/opt_scan_scatter_3.13.png)](https://options-alpha-scanner.onrender.com)
 
-[![Live Demo](https://img.shields.io/badge/🚀%20OPEN%20LIVE%20DASHBOARD-4dd9d9?style=for-the-badge)](https://options-alpha-scanner.onrender.com)
+[![Live Demo](https://img.shields.io/badge/🚀%20OPEN%20LIVE%20DASHBOARD-4dd9d9?style=for-the-badge)](https://options-alpha-scanner.onrender.com) -->
 
 ---
 
