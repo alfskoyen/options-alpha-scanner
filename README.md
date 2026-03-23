@@ -257,7 +257,7 @@ from raw API data before the scores are combined in the Scoring Model (Section 5
 
 ---
 
-### 3a. Premium Dimension
+#### 3a. _Premium Dimension_
 
 ### DTE Windows
 
@@ -322,7 +322,7 @@ Each DTE window receives a categorical label combining IV/HV ratio and efficienc
 
 ---
 
-## 3b. Risk Dimension
+#### _3b. Risk Dimension_
 
 ### Historical Volatility
 
@@ -587,7 +587,7 @@ dict_keys(['Meta Data', 'Time Series (Daily)'])
 
 ---
 
-## 9. Repository Structure
+## 8. Repository Structure
 
 ```
 repo/
@@ -612,7 +612,7 @@ repo/
 
 ---
 
-## 10. Configuration & Setup
+## 9. Configuration & Setup
 
 ### Key Parameters
 
