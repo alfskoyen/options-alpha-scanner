@@ -15,8 +15,8 @@
 
 --- 
 
-## &nbsp;  Option Analytics / Put Option Alpha Analysis and Dashboard Project
-### A quantitative put-selling opportunity scanner across ~600 NYSE & Nasdaq symbols
+## Option Analytics / Put Option Alpha Analysis and Dashboard Project
+&nbsp; A quantitative put-selling opportunity scanner across ~600 NYSE & Nasdaq symbols
 
 ---
 Welcome to a Demo of the Bi-Dimensional Options Scanner
