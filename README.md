@@ -479,7 +479,6 @@ represent the cleanest put-selling setups where premium and safety align.</em></
 </div>
 
 ---
-### Global Distributions — Preset Scenarios
 
 ### Global Distributions — Universe Metric Histograms
 
