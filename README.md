@@ -18,7 +18,7 @@
 ## Option Analytics / Put Option Alpha Analysis and Dashboard Project
 &nbsp; A quantitative put-selling opportunity scanner across ~600 NYSE & Nasdaq symbols
 
-<br><br>
+<br>
 
 Review a Demo of the Options Premium & Risk Model · Live Screening Dashboard -->
 
