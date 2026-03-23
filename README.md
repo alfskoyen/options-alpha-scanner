@@ -535,28 +535,80 @@ column — premium buckets, IV/HV ratios, spike signals, term structure slopes, 
 metrics are all accessible for manual review and validation of model-surfaced candidates.</em></p>
 </div>
 
+## 9. Repository Structure
 
+```
+repo/
+├── notebooks/
+│   └── options_analysis_pipeline.ipynb
+├── src/
+│   ├── av_api_calls.py                  # API layer + scan loop
+│   ├── option_prem_iv_builder_V.py      # premium layer
+│   ├── hist_vol_iv_risk_builder_III.py  # risk/HV layer
+│   └── score_universe_IV.py             # scoring layer
+├── data/                                # scored CSV outputs
+├── assets/                              # images for dashboard/README
+├── charts/                              # chart outputs
+├── app_screener.py                      # dashboard app
+├── data_prep.py                         # data prep utilities
+├── theme.py                             # dashboard theme
+├── Procfile
+├── render.yaml
+├── requirements.txt
+└── README.md
+```
 
+---
 
-<div align="center">
-<img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_bar_prem_3.13.png?raw=true"alt="asdfdsa" width="1500"/>
-<p><em>Figure: Premium to Risk Spread Scatter-Plot of Global Universe of Put Options.</em></p>
-</div>
+## 10. Configuration & Setup
 
-<div align="center">
-<img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_histo_risk_3.13.png?raw=true"alt="asdfdsa" width="1500"/>
-<p><em>Figure: Premium to Risk Spread Scatter-Plot of Global Universe of Put Options.</em></p>
-</div>
+### Key Parameters
 
-<div align="center">
-<img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_term_q3_atm_prem_3.13.png?raw=true"alt="asdfdsa" width="1500"/>
-<p><em>Figure: Premium to Risk Spread Scatter-Plot of Global Universe of Put Options.</em></p>
-</div>
+```python
+# av_api_calls.py
+option_date  = '2026-02-27'   # options chain snapshot date
+as_of_date   = '2026-02-27'   # HV history truncation date
+BATCH_SIZE   = 37             # symbols per rate-limit batch
+PAUSE_SECS   = 61             # seconds between batches
 
-<div align="center">
-<img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_table_3.13.png?raw=true"alt="asdfdsa" width="1500"/>
-<p><em>Figure: Premium to Risk Spread Scatter-Plot of Global Universe of Put Options.</em></p>
-</div>
+# option_prem_iv_builder_V.py
+DELTA_BUCKETS = {
+    'ATM':      (0.40, 0.60),
+    'Slight':   (0.25, 0.40),
+    'Moderate': (0.15, 0.25),
+    'Far':      (0.05, 0.15),
+}
+DTE_TOLERANCE = 13            # ± days to match chain expiry to target DTE
+
+# score_universe_IV.py
+RATIO_RICH_THRESHOLD = 1.20   # IV/HV above this = "Rich"
+PREM_EFF_THRESHOLD   = 0.60   # prem_per_iv above this = "Efficient"
+```
+
+### Requirements
+
+```
+pandas
+numpy
+scipy
+scikit-learn
+requests
+python-dotenv
+plotly
+ipython
+```
+
+### Environment
+
+```bash
+# .env file
+ALPHA_VANTAGE_API_KEY=your_key_here
+```
+
+---
+
+*Built for systematic put-selling opportunity identification across the US equity universe.*
+
 
 Welcome
 
