@@ -162,11 +162,38 @@ dict_keys(['Meta Data', 'Time Series (Daily)'])
 
 ---
 
-## 4. Premium Layer
+## 4. Two-Dimensional Model — Premium & Risk
+
+The core of the framework is a two-dimensional scoring model. Every symbol in the universe 
+is evaluated on two independent axes; how much premium is available, and how worrisome is the 
+vol environment. The scoring method places each symbol into one of four quadrants based on its position relative to 
+the universe median on each axis.
+```
+                    HIGH PREMIUM
+                         │
+          Q2             │             Q1
+    High Premium         │       High Premium
+     High Risk           │        Low Risk  ← target
+                         │
+  ───────────────────────┼───────────────────────
+                         │
+          Q4             │             Q3
+    Low Premium          │        Low Premium
+     High Risk           │         Low Risk
+                         │
+                     LOW PREMIUM
+```
+
+*The two sub-layers below — Premium (4a) and Risk (4b) — describe how each axis is built
+from raw API data before the scores are combined in the Scoring Model (Section 5).*
+
+---
+
+### 4a. Premium Layer
 
 ### DTE Windows
 
-Four expiration windows are targeted per symbol:
+Four days-to-expiration windows are targeted per symbol, attempting consistency across the global set. 
 
 | Window | Selection Method |
 |---|---|
@@ -188,7 +215,9 @@ Contracts are bucketed by `abs(delta)` rather than price distance from spot. Thi
 
 ### Liquidity Filters
 
-Open interest thresholds are applied per bucket — ATM contracts require zero OI (vega filter only) since OI=0 on a given day does not indicate illiquidity for near-the-money contracts. Far OTM requires meaningful OI to filter genuinely untradeable strikes.
+Open interest thresholds are applied per bucket: 
+- ATM contracts require zero Option Interest (OI) (vega filter only) since OI=0 on a given day does not indicate illiquidity for near-the-money contracts.
+- Far OTM requires meaningful OI to filter genuinely untradeable strikes.
 
 | Bucket | Min OI |
 |---|---|
@@ -199,7 +228,8 @@ Open interest thresholds are applied per bucket — ATM contracts require zero O
 
 ### Premium Normalization
 
-All premium values are expressed as `extrinsic_value / spot_price` — this makes premium directly comparable across any ticker regardless of price level. A `premium_atm_30 = 2.5` means the ATM 30-day put collects 2.5% of the stock's current price.
+All premium values are expressed as `extrinsic_value / spot_price` — this makes premium directly comparable across any ticker regardless of price level. 
+A `premium_atm_30 = 2.5` means the ATM 30-day put collects 2.5% of the stock's current price.
 
 ### Premium Efficiency Metrics
 
