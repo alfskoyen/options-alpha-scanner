@@ -453,9 +453,18 @@ on the chart, making the best setups immediately visible without any filtering. 
 any point surfaces key metrics including IV/HV ratio, spike signal, relative vol vs SPY, 
 straddle premium, and term structure divergence.
 
-<div align="center">
+<!-- <div align="center">
 <img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_scatter_3.13.png?raw=true" alt="Premium to Risk Scatter — Global Universe" width="1500"/>
 <p><em>Figure 1: Premium vs Risk scatter across the full ~600 symbol universe. Each point 
+represents one symbol, colored by quadrant. Q1 (top-left) symbols offer the highest premium 
+relative to their risk score — the primary target zone for put-selling.</em></p>
+</div> -->
+
+<div align="center">
+  <a href="https://raw.githubusercontent.com/alfskoyen/options-alpha-scanner/main/assets/opt_scan_scatter_3.13.png">
+    <img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_scatter_3.13.png?raw=true" alt="Premium to Risk Scatter — Global Universe" width="1500"/>
+  </a>
+  <p><em>Figure 1: Premium vs Risk scatter across the full ~600 symbol universe. Each point 
 represents one symbol, colored by quadrant. Q1 (top-left) symbols offer the highest premium 
 relative to their risk score — the primary target zone for put-selling.</em></p>
 </div>
@@ -471,9 +480,18 @@ quadrant so the risk context is immediately visible alongside the ranking. Rich 
 surfaces IV/HV ratio, spike signal, and premium efficiency metrics without leaving the chart, 
 enabling rapid triage across dozens of candidates.
 
-<div align="center">
+<!-- <div align="center">
 <img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_bar_prem_3.13.png?raw=true" alt="Ranked Bar Chart — Risk Score" width="1500"/>
 <p><em>Figure 2: Ranked bar chart view showing the lowest risk score symbols across the 
+universe. Bar color reflects quadrant membership — Q1 names (mint) in a low-risk ranking 
+represent the cleanest put-selling setups where premium and safety align.</em></p>
+</div> -->
+
+<div align="center">
+  <a href="https://raw.githubusercontent.com/alfskoyen/options-alpha-scanner/main/assets/opt_scan_bar_prem_3.13.png">
+    <img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_bar_prem_3.13.png?raw=true" alt="Premium to Risk Scatter — Global Universe" width="1500"/>
+  </a>
+  <p><em>Figure 2: Ranked bar chart view showing the lowest risk score symbols across the 
 universe. Bar color reflects quadrant membership — Q1 names (mint) in a low-risk ranking 
 represent the cleanest put-selling setups where premium and safety align.</em></p>
 </div>
@@ -490,9 +508,19 @@ a specific symbol sits on each curve relative to the population. This view is pa
 useful for calibrating expectations — a symbol with `HV_30_pct = 0.92` reads very 
 differently when you can see the full distribution shape behind it.
 
-<div align="center">
+<!-- <div align="center">
 <img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_histo_risk_3.13.png?raw=true" alt="Universe Metric Distributions" width="1500"/>
 <p><em>Figure 3: Histogram distributions of key risk and premium metrics across the full 
+universe. The shape of these distributions shifts with the vol regime — compressed 
+distributions indicate a calm market, fat right tails indicate elevated fear or idiosyncratic 
+stress concentrated in specific sectors.</em></p>
+</div> -->
+
+<div align="center">
+  <a href="https://raw.githubusercontent.com/alfskoyen/options-alpha-scanner/main/assets/opt_scan_histo_risk_3.13.png">
+    <img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_histo_risk_3.13.png?raw=true" alt="Premium to Risk Scatter — Global Universe" width="1500"/>
+  </a>
+  <p><em>Figure 3: Histogram distributions of key risk and premium metrics across the full 
 universe. The shape of these distributions shifts with the vol regime — compressed 
 distributions indicate a calm market, fat right tails indicate elevated fear or idiosyncratic 
 stress concentrated in specific sectors.</em></p>
@@ -509,9 +537,19 @@ premium is outpacing what the vol environment implies, flagging underpriced term
 as an additional opportunity signal. Views are filterable by quadrant, allowing focused 
 analysis within Q1 or Q2 names specifically.
 
-<div align="center">
+<!-- <div align="center">
 <img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_term_q3_atm_prem_3.13.png?raw=true" alt="Term Structure — ATM Premium Slope" width="1500"/>
 <p><em>Figure 3: Term structure view showing ATM premium across DTE windows for top Q1 
+symbols. Steeper slopes indicate greater reward for selling longer-dated options. The 
+divergence between premium slope and IV slope is the key signal — positive divergence 
+means the market is paying above what vol implies.</em></p>
+</div> -->
+
+<div align="center">
+  <a href="https://raw.githubusercontent.com/alfskoyen/options-alpha-scanner/main/assets/opt_scan_term_q3_atm_prem_3.13.png">
+    <img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_term_q3_atm_prem_3.13.png?raw=true" alt="Premium to Risk Scatter — Global Universe" width="1500"/>
+  </a>
+  <p><em>Figure 4: Term structure view showing ATM premium across DTE windows for top Q1 
 symbols. Steeper slopes indicate greater reward for selling longer-dated options. The 
 divergence between premium slope and IV slope is the key signal — positive divergence 
 means the market is paying above what vol implies.</em></p>
@@ -528,9 +566,18 @@ on any candidate surfaced by the scatter or bar views. The `prem_efficiency_sign
 categorical columns per DTE window give an at-a-glance summary of whether each expiration 
 window is Rich or Cheap, Efficient or Thin.
 
-<div align="center">
+<!-- <div align="center">
 <img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_table_3.13.png?raw=true" alt="Raw Metrics Table" width="1500"/>
 <p><em>Figure 4: Full metrics table showing all scoring outputs per symbol. Sortable by any 
+column — premium buckets, IV/HV ratios, spike signals, term structure slopes, and efficiency 
+metrics are all accessible for manual review and validation of model-surfaced candidates.</em></p>
+</div> -->
+
+<div align="center">
+  <a href="https://raw.githubusercontent.com/alfskoyen/options-alpha-scanner/main/assets/opt_scan_table_3.13.png">
+    <img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_table_3.13.png?raw=true" alt="Premium to Risk Scatter — Global Universe" width="1500"/>
+  </a>
+  <p><em>Figure 5: Full metrics table showing all scoring outputs per symbol. Sortable by any 
 column — premium buckets, IV/HV ratios, spike signals, term structure slopes, and efficiency 
 metrics are all accessible for manual review and validation of model-surfaced candidates.</em></p>
 </div>
