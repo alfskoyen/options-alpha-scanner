@@ -162,6 +162,116 @@ dict_keys(['Meta Data', 'Time Series (Daily)'])
 
 ---
 
+## 4. Premium Layer
+
+### DTE Windows
+
+Four expiration windows are targeted per symbol:
+
+| Window | Selection Method |
+|---|---|
+| 14-day | Weekday-aware Friday snapping — Mon/Tue/Wed → next Friday, Thu/Fri → Friday after next |
+| 30-day | Mechanical offset, nearest chain expiry within ±13 days |
+| over60_1 | First standard expiration beyond 60 days (auto-discovered from chain) |
+| over60_2 | Second standard expiration beyond 60 days |
+
+### Delta-Based Strike Buckets
+
+Contracts are bucketed by `abs(delta)` rather than price distance from spot. This equalizes strike selection across the universe — a 0.20 delta put on a high-vol stock and a low-vol stock both represent approximately 20% probability of expiring ITM, regardless of the very different price distances involved.
+
+| Bucket | Delta Range | Probability ITM |
+|---|---|---|
+| ATM | 0.40 – 0.60 | ~50% |
+| Slight | 0.25 – 0.40 | ~25–40% |
+| Moderate | 0.15 – 0.25 | ~15–25% |
+| Far | 0.05 – 0.15 | ~5–15% |
+
+### Liquidity Filters
+
+Open interest thresholds are applied per bucket — ATM contracts require zero OI (vega filter only) since OI=0 on a given day does not indicate illiquidity for near-the-money contracts. Far OTM requires meaningful OI to filter genuinely untradeable strikes.
+
+| Bucket | Min OI |
+|---|---|
+| ATM | 0 (vega ≥ 0.001 only) |
+| Slight | 1 |
+| Moderate | 3 |
+| Far | 5 |
+
+### Premium Normalization
+
+All premium values are expressed as `extrinsic_value / spot_price` — this makes premium directly comparable across any ticker regardless of price level. A `premium_atm_30 = 2.5` means the ATM 30-day put collects 2.5% of the stock's current price.
+
+### Premium Efficiency Metrics
+
+Three metrics normalize premium relative to the vol environment:
+
+| Metric | Formula | Interpretation |
+|---|---|---|
+| `prem_per_iv_primary` | `straddle / (ATM_IV × √(DTE/252))` | Near 1.0 = fair value. Above 1.0 = collecting more than IV implies |
+| `prem_per_iv_sec` | `put_atm / ATM_IV` | Premium per point of implied vol |
+| `prem_per_hv30` | `put_atm / HV_30` | Premium per point of realized vol |
+
+### Premium Efficiency Signal
+
+Each DTE window receives a categorical label combining IV/HV ratio and efficiency:
+
+| Signal | Condition |
+|---|---|
+| Rich + Efficient | ratio ≥ 1.20 AND prem_per_iv ≥ 0.60 |
+| Rich + Thin | ratio ≥ 1.20 AND prem_per_iv < 0.60 |
+| Cheap + Efficient | ratio < 1.20 AND prem_per_iv ≥ 0.60 |
+| Cheap + Thin | ratio < 1.20 AND prem_per_iv < 0.60 |
+
+---
+
+## 5. Risk Layer
+
+### Historical Volatility
+
+Computed from daily log returns on closing prices, annualized with √252:
+
+```
+HV_N = std(log(P_t / P_{t-1}), window=N) × √252
+```
+
+Three windows: HV_20, HV_30, HV_60. The series is truncated at `as_of_date` to prevent any lookahead from future prices entering the calculation.
+
+### IV/HV Ratios
+
+ATM IV from the options chain is compared to HV_30 (primary benchmark) per DTE window:
+
+| Signal | Ratio |
+|---|---|
+| Very Rich | ≥ 1.50 |
+| Rich Vol | ≥ 1.20 |
+| Equiv. Vol | ≥ 0.90 |
+| Compressed Vol | ≥ 0.70 |
+| Discounted Vol | < 0.70 |
+
+### Spike Analysis
+
+A spike is defined as any day where `|log_return| > 2σ` of that window's own standard deviation — self-normalizing so each stock is measured against its own recent behavior.
+
+Two windows are run: 30-day and 60-day. The spike ratio compares observed spikes to the expected count under normality (4.55% of days expected to exceed 2σ).
+
+**Universe-relative spike signal** is computed in the scoring layer by blending frequency × log(magnitude) across both windows and ranking percentile vs the full universe:
+
+```
+spike_score = 0.7 × (spike_ratio_30 × log1p(avg_spike_pct_30))
+            + 0.3 × (spike_ratio_60 × log1p(avg_spike_pct_60))
+```
+
+### Relative Volatility
+
+`HV_30` for each symbol is divided by SPY's `HV_30` and QQQ's `HV_30` (computed once before the loop):
+
+```
+relative_vol_spy = symbol_HV_30 / spy_HV_30
+```
+
+Values above 1.0 mean the symbol is moving more than the broad market. This separates idiosyncratic vol from systematic vol — a stock moving 3× SPY in the same market environment carries fundamentally different put-selling risk than one moving 1.2×.
+
+---
 
 <div align="center">
 <img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_bar_prem_3.13.png?raw=true"alt="asdfdsa" width="1500"/>
