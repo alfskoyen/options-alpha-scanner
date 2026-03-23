@@ -1,10 +1,10 @@
 
-<div align="center">
+<!-- <div align="center">
   <a href="https://raw.githubusercontent.com/alfskoyen/options-alpha-scanner/main/assets/opt_scan_scatter_3.13.png">
     <img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_scatter_3.13.png?raw=true" alt="Premium to Risk Scatter" width="1500"/>
   </a>
-  <p><em>Figure: Premium to Risk Spread Scatter-Plot of Global Universe of Put Options.</em></p>
-</div>
+  <p><em>Figure: Premium to Risk Spread Scatter-Plot of Global Universe of Put Options.</em></p> 
+</div> -->
 
 ![Status](https://img.shields.io/badge/status-beta-orange)
 ![Python](https://img.shields.io/badge/python-3.11-blue)
@@ -23,17 +23,17 @@
 ---
 Welcome to a Demo of the Bi-Dimensional Options Scanner
 
-[![Live Demo](https://img.shields.io/badge/Live-Demo-4dd9d9?style=for-the-badge&logo=render)](https://options-alpha-scanner.onrender.com)
-
----
-
 <div align="center">
 
 [![Dashboard Preview](assets/opt_scan_scatter_3.13.png)](https://options-alpha-scanner.onrender.com)
 
 [![Live Demo](https://img.shields.io/badge/🚀%20OPEN%20LIVE%20DASHBOARD-4dd9d9?style=for-the-badge)](https://options-alpha-scanner.onrender.com)
 
+---
+
 </div>
+
+<!-- [![Live Demo](https://img.shields.io/badge/Live-Demo-4dd9d9?style=for-the-badge&logo=render)](https://options-alpha-scanner.onrender.com) -->
 
 ## Table of Contents
 
