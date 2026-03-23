@@ -27,13 +27,12 @@
 1. [Objective & North Star](#1-objective--north-star)
 2. [Pipeline Architecture](#2-pipeline-architecture)
 3. [Data Sources & API Pipeline](#3-data-sources--api-pipeline)
-4a. [Premium Dimension](#4-premium-layer)
-4b. [Risk Dimension](#5-risk-layer)
-5. [Scoring Model](#6-scoring-model)
-6. [Key Assumptions](#7-key-assumptions)
-7. [Output & Dashboard](#8-output--dashboard)
-8. [Repository Structure](#9-repository-structure)
-9. [Configuration & Setup](#10-configuration--setup)
+4. [Two-Dimensional Model — Premium & Risk](#4-two-dimensional-model-—premium-&-risk)  
+5. [Scoring Model](#5-scoring-model)
+6. [Key Assumptions](#6-key-assumptions)
+7. [Output & Dashboard](#7-output--dashboard)
+8. [Repository Structure](#8-repository-structure)
+9. [Configuration & Setup](#9-configuration--setup)
 
 ---
 ## 1. Objective & North Star
