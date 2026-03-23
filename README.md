@@ -20,7 +20,7 @@
 
 <br>
 
-Review a Demo of the Options Premium & Risk Model · Live Screening Dashboard -->
+**Review a Demo of the Options Premium & Risk Model** · **Live Screening Dashboard** -->
 
 <div align="center">
 
