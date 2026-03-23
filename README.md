@@ -27,13 +27,13 @@
 1. [Objective & North Star](#1-objective--north-star)
 2. [Pipeline Architecture](#2-pipeline-architecture)
 3. [Data Sources & API Pipeline](#3-data-sources--api-pipeline)
-4. [Premium Layer](#4-premium-layer)
-5. [Risk Layer](#5-risk-layer)
-6. [Scoring Model](#6-scoring-model)
-7. [Key Assumptions](#7-key-assumptions)
-8. [Output & Dashboard](#8-output--dashboard)
-9. [Repository Structure](#9-repository-structure)
-10. [Configuration & Setup](#10-configuration--setup)
+4a. [Premium Dimension](#4-premium-layer)
+4b. [Risk Dimension](#5-risk-layer)
+5. [Scoring Model](#6-scoring-model)
+6. [Key Assumptions](#7-key-assumptions)
+7. [Output & Dashboard](#8-output--dashboard)
+8. [Repository Structure](#9-repository-structure)
+9. [Configuration & Setup](#10-configuration--setup)
 
 ---
 ## 1. Objective & North Star
@@ -374,6 +374,68 @@ slope_divergence = premium_slope − iv_slope
 Positive divergence means premium is growing faster across DTE than IV implies — an opportunity signal. All slopes are percentile-ranked vs universe.
 
 ---
+
+## 6. Key Assumptions
+
+### Premium Assumptions
+
+- **Extrinsic value only** — intrinsic value is subtracted. The metric is what you actually collect as time premium, not total option price.
+- **Mid-price** — `(bid + ask) / 2` used rather than last trade, which can be stale.
+- **Delta bucketing is stable within a session** — delta shifts intraday but for end-of-day snapshot analysis, the delta at close accurately represents the moneyness distribution.
+- **ATM put-call parity near spot** — straddle is computed as put_atm + call_atm. Near the money, put and call IV should converge. Wide divergence flags potential data quality issues.
+
+### Volatility Assumptions
+
+- **Log-normality** — HV is computed from log returns, consistent with Black-Scholes. The √252 annualization assumes 252 trading days per year.
+- **EWMA not used for mean** — EWMA mean estimates are noise-dominated. The HV calculation uses rolling standard deviation with zero mean assumption, consistent with practitioner convention.
+- **HV_30 as primary benchmark** — 30-day realized vol is the most directly comparable window to the most liquid options (30-DTE). HV_20 and HV_60 provide context but HV_30 drives the IV/HV ratio.
+- **as_of_date truncation** — price history is truncated at the option snapshot date. This is strictly enforced to prevent lookahead — no future returns can enter the HV calculation.
+
+### Spike Assumptions
+
+- **2σ threshold** — under normality, approximately 4.55% of days should exceed 2σ. This gives the expected_count baseline. Ratios above 1.0 mean more spikes than expected.
+- **Self-normalizing** — each stock's threshold is set by its own window standard deviation, not a fixed absolute threshold. This means a 3% move on a calm stock and a 10% move on a volatile stock can both be spikes — what matters is deviation from recent behavior.
+- **30-day window weighted higher** (0.70) than 60-day (0.30) in the blended universe score — more recent activity is more relevant for put-selling decisions.
+
+### API / Data Assumptions
+
+- **Point-in-time consistency** — `option_date` and `as_of_date` are set to the same date. The options chain and the HV calculation both anchor to the same closing snapshot.
+- **AV historical options availability** — not all symbols have complete historical chains. Symbols with missing data are logged to `error_log_df` and excluded from the master.
+- **Compact time series = 100 days** — sufficient for HV_60 with buffer. If a symbol has fewer than 60 trading days of history the HV_60 will be NaN but HV_20 and HV_30 may still be valid.
+- **SPY/QQQ as benchmark** — SPY represents the broad market (used as primary relative vol benchmark). QQQ represents the Nasdaq-heavy subset relevant for tech names. Both are fetched once to avoid adding 4 calls per symbol to the run.
+
+---
+
+## 7. Output & Dashboard
+
+### Master DataFrame
+
+One row per symbol, approximately 100+ columns including:
+
+- `symbol`, `date`, `spot`
+- `premium_{bucket}_{dte}` — normalized put premium per bucket/DTE (16 columns)
+- `iv_{bucket}_{dte}` — average IV per bucket/DTE (16 columns)
+- `straddle_{dte}`, `put_atm_{dte}`, `call_atm_{dte}` — straddle components (12 columns)
+- `prem_per_iv_primary_{dte}`, `prem_per_iv_sec_{dte}`, `prem_per_hv30_{dte}` — efficiency (12 columns)
+- `HV_20`, `HV_30`, `HV_60` — realized vol
+- `atm_iv_{dte}`, `ratio_{dte}`, `spread_{dte}`, `signal_{dte}` — IV/HV per DTE (16 columns)
+- `spike_*_30`, `spike_*_60` — spike metrics both windows
+- `relative_vol_spy`, `relative_vol_qqq` — benchmark-relative vol
+- `premium_score`, `risk_score`, `quadrant` — composite scores
+- `prem_efficiency_signal_{dte}` — categorical signal per DTE
+- `spike_signal_universe`, `spike_pct_universe` — universe-relative spike
+- `HV_30_pct`, `relative_vol_spy_pct`, `relative_vol_qqq_pct` — percentile ranks
+- `premium_slope`, `iv_slope`, `slope_divergence`, `slope_div_pct` — term structure
+
+### CSV Output
+
+Saved as `data/scored_master_{option_date}.csv` — one file per run, date-stamped for run tracking.
+
+---
+
+### Dashboard
+Scoring and metric outputs from the model are visualized across a five sectional dasbhaaord.
+The dashboard convesys the glboal universe of symbols through the 
 
 <div align="center">
 <img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_bar_prem_3.13.png?raw=true"alt="asdfdsa" width="1500"/>
