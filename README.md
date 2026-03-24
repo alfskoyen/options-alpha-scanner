@@ -487,7 +487,7 @@ Positive divergence means premium is growing faster across DTE than IV implies â
 ---
 ## 6. Pipeline Architecture
 
-The pipeline is multi-phased and accomplishes several goals including data capture, wrangling and parameter creation in four sequential layers.
+The pipeline is multi-phased and accomplishes several goals including data capture, wrangling and feature creation in four sequential layers.
 Our Beta model and run of the pipeline is executed in a Jupyter Notebook housing certain key arguments for the output file.
 
 [:abacus: Options Analysis Pipeline Execution](https://github.com/alfskoyen/options-alpha-scanner/blob/main/notebooks/options_scoring_pipeline.ipynb)
