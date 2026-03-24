@@ -1,7 +1,7 @@
 """
 score_universe.py
 ------------------
-The scoring methodogoly is a blend of two risk scores across two axes:
+The scoring methodology is a blend of two risk scores across two axes:
 Premium and Risk. 
 
   PREMIUM — how much premium is available, efficiency-weighted
@@ -47,7 +47,7 @@ STRIKE_WEIGHTS = {
 RISK_WEIGHTS = {
     'iv_hv_ratio': 0.2,
     'hv_30':       0.25,
-    'spike_ratio': 0.4,
+    'spike_wt_score': 0.4,
     'slope':       0.15,
 }
 
@@ -123,13 +123,13 @@ def compute_risk_score(df):
     """
     Composite risk score — higher = more risk = penalizes premium score.
     Components:
-      iv_hv_ratio  : asymmetric distance from IV/HV fair value (1.0)
-                     IV < HV penalized 2x harder than IV > HV
-      hv_30        : absolute realized vol level (HV_30 only)
-      spike_ratio  : combined freq x magnitude, weighted 0.4*spike_30 + 0.6*spike_60
-      slope        : term structure slope of IV/HV ratios across DTE windows
-                     negative slope (near > far) = short term stress = higher risk
-                     positive slope (far > near) = small risk signal
+      iv_hv_ratio     : asymmetric distance from IV/HV fair value (1.0)
+                        IV < HV penalized 2x harder than IV > HV
+      hv_30           : absolute realized vol level (HV_30 only)
+      spike_wt_score  : combined freq x magnitude, weighted 0.4*spike_30 + 0.6*spike_60
+      slope           : term structure slope of IV/HV ratios across DTE windows
+                        negative slope (near > far) = short term stress = higher risk
+                        positive slope (far > near) = small risk signal
     """
     # -- iv_hv_ratio component ------------------------------------------------
     ratio_cols = [c for c in df.columns if c.startswith('ratio_')]  ## hit each iv/hv ratio col. across DTE
@@ -140,10 +140,10 @@ def compute_risk_score(df):
         (avg_ratio - 1.0) * 0.5    # IV > HV — softer penalty
     )
 
-    # -- spike component — weighted blend of 30 and 60 day windows ------------
+    # -- spike —> weighted blend of 30 and 60 day windows ------------
     spike_30_combined = df['spike_ratio_30'].fillna(0) * np.log1p(df['max_spike_pct_30'].fillna(0))
     spike_60_combined = df['spike_ratio_60'].fillna(0) * np.log1p(df['max_spike_pct_60'].fillna(0))
-    spike_blended     = 0.4 * spike_30_combined + 0.6 * spike_60_combined
+    spike_blended     = 0.7 * spike_30_combined + 0.3 * spike_60_combined
 
     # -- IV slope component ------------------------------------------------------
     # negative slope = near IV > far IV = short term stress = higher risk
@@ -159,7 +159,7 @@ def compute_risk_score(df):
     features = pd.DataFrame({
         'iv_hv_ratio': iv_hv_risk,
         'hv_30':       df['HV_30'].fillna(0),
-        'spike_ratio': spike_blended,
+        'spike_wt_score': spike_blended,
         'slope':       slope_risk,
     }, index=df.index)
 
@@ -171,7 +171,7 @@ def compute_risk_score(df):
     risk = (
         scaled_df['iv_hv_ratio'] * RISK_WEIGHTS['iv_hv_ratio'] +
         scaled_df['hv_30']       * RISK_WEIGHTS['hv_30']       +
-        scaled_df['spike_ratio'] * RISK_WEIGHTS['spike_ratio'] +
+        scaled_df['spike_wt_score'] * RISK_WEIGHTS['spike_wt_score'] +
         scaled_df['slope']       * RISK_WEIGHTS['slope']
     )
 
@@ -370,20 +370,20 @@ def score_universe(master_df):
 # Summary View
 # =============================================================================
 
-def score_summary(scored_df):
-    """
-    Clean summary — key columns only for quick review.
-    """
-    cols = [
-        'symbol', 'quadrant', 'premium_score', 'risk_score',
-        # straddle efficiency
-        'prem_per_iv_primary_14', 'prem_per_iv_primary_30',
-        'prem_per_hv30_14',       'prem_per_hv30_30',
-        # term structure
-        'premium_slope', 'iv_slope', 'slope_divergence', 'slope_div_pct',
-        # risk
-        'HV_30', 'ratio_30', 'spike_ratio', 'spike_signal',
-    ]
-    available = [c for c in cols if c in scored_df.columns]
-    return scored_df[available].reset_index(drop=True)
+# def score_summary(scored_df):
+#     """
+#     Clean summary — key columns only for quick review.
+#     """
+#     cols = [
+#         'symbol', 'quadrant', 'premium_score', 'risk_score',
+#         # straddle efficiency
+#         'prem_per_iv_primary_14', 'prem_per_iv_primary_30',
+#         'prem_per_hv30_14',       'prem_per_hv30_30',
+#         # term structure
+#         'premium_slope', 'iv_slope', 'slope_divergence', 'slope_div_pct',
+#         # risk
+#         'HV_30', 'ratio_30', 'spike_ratio', 'spike_signal',
+#     ]
+#     available = [c for c in cols if c in scored_df.columns]
+#     return scored_df[available].reset_index(drop=True)
 
