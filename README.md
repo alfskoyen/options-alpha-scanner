@@ -282,10 +282,10 @@ from raw API data, then being combined in the Scoring Model (Section 5).*
 
 Raw API data is transformed into two sets of derived features — one describing the 
 **premium opportunity** available in the options market, the other describing the 
-**risk environment** embedded in the vol regime. These features are the inputs to 
-the scoring model in Section 4.
+**risk environment** embedded in the related volatility. These features are the inputs to 
+the scoring model outlined in Section 5.
 
-Each feature is computed per symbol, per DTE window, and stored as a flat column 
+Most features are computed per symbol, per DTE window, and stored as a flattened row 
 in the master DataFrame. No scoring or ranking happens here — this section is purely 
 about measurement.
 
@@ -343,7 +343,7 @@ Three metrics normalize premium relative to the vol environment:
 
 ### Premium Efficiency Signal
 
-Each DTE window receives a categorical label combining IV/HV ratio and efficiency:
+Each DTE window receives a categorical label combining IV/HV ratio and premium efficiency:
 
 | Signal | Condition |
 |---|---|
@@ -379,9 +379,9 @@ ATM IV from the options chain is compared to HV_30 (primary benchmark) per DTE w
 
 ### Spike Analysis
 
-A spike is defined as any day where `|log_return| > 2σ` of that window's own standard deviation — self-normalizing so each stock is measured against its own recent behavior.
+**Within Symbol** A spike is defined as any day where `|log_return| > 2σ` of that window's own standard deviation, self-normalizing so each stock is measured against its own recent behavior.
 
-Two windows are run: 30-day and 60-day. The spike ratio compares observed spikes to the expected count under normality (4.55% of days expected to exceed 2σ).
+Two windows are run: 30-day and 60-day. The spike ratio compares observed spikes to the expected count under normality (4.55% of days expected to exceed 2σ). This data point is eventually integrated into the risk score. 
 
 **Universe-relative spike signal** is computed in the scoring layer by blending frequency × log(magnitude) across both windows and ranking percentile vs the full universe:
 
