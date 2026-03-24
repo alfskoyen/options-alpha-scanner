@@ -16,7 +16,13 @@
 --- 
 
 ## Option Analytics / Put Option Alpha Analysis and Dashboard Project
-&nbsp; A quantitative put-selling opportunity scanner across ~600 NYSE & Nasdaq symbols
+&nbsp; A quantitative options opportunity analytics engine scanning ~600 NYSE & Nasdaq symbols.
+
+This framework ranks the entire market using a **two-dimensional model (Premium vs Risk)**
+ - surfacing where the options market is *overpaying relative to underlying volatility conditions*.
+
+> Instead of asking “is this option attractive?”, this model asks:  
+> **“Is this among the best opportunities in the entire market today?”**
 
 <br>
 
