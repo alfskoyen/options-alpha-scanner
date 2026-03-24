@@ -82,54 +82,7 @@ The framework is intentionally cross-sectional. Every score is relative to the s
 
 ---
 
-## 2. Output & Dashboard
-
-### Master DataFrame
-The scoring layer (`score_universe.py`) produces the **final master analytics dataset** used for visualization, ranking, and downstream assessment.
-
-This output is a **flattened, symbol-level table**, where each row represents a single symbol for the given run date and all derived metrics are consolidated into a single record.
-
-The resulting dataset contains ~100+ columns spanning premium, volatility, efficiency, spike diagnostics, and composite scoring outputs.
-
-**Structure:**
-- One row per symbol  
-- Cross-sectional features engineered across all DTE windows and strike buckets  
-- Fully self-contained — every scoring input and output is available at the symbol level
-
-Key column families include:
-
-- `symbol`, `date`, `spot` — identifier, run date, and underlying close
-- `premium_score`, `risk_score`, `quadrant` — final composite scoring outputs
-- `expiration_{dte}` — selected expiration mapped to each target window (`14`, `30`, `over60_1`, `over60_2`)
-- `premium_{bucket}_{dte}` — normalized put premium by strike bucket and DTE  
-  (`atm`, `slight`, `moderate`, `far` × 4 windows = 16 columns)
-- `iv_{bucket}_{dte}` — average implied volatility by strike bucket and DTE  
-  (`atm`, `slight`, `moderate`, `far` × 4 windows = 16 columns)
-- `put_atm_{dte}`, `call_atm_{dte}`, `straddle_{dte}` — ATM leg pricing and straddle components  
-  (3 metrics × 4 windows = 12 columns)
-- `prem_per_iv_primary_{dte}`, `prem_per_iv_sec_{dte}`, `prem_per_hv30_{dte}` — premium-efficiency metrics by window  
-  (3 metrics × 4 windows = 12 columns)
-- `HV_20`, `HV_30`, `HV_60` — realized volatility lookback windows
-- `atm_iv_{dte}`, `ratio_{dte}`, `spread_{dte}`, `signal_{dte}` — ATM IV vs HV diagnostics by DTE  
-  (4 metrics × 4 windows = 16 columns)
-- `spike_count_30`, `spike_ratio_30`, `spike_signal_30`, `avg_spike_pct_30`, `max_spike_pct_30` — 30-day spike diagnostics
-- `spike_count_60`, `spike_ratio_60`, `spike_signal_60`, `avg_spike_pct_60`, `max_spike_pct_60` — 60-day spike diagnostics
-- `spike_score_universe`, `spike_pct_universe`, `spike_signal_universe` — universe-relative spike ranking outputs
-- `relative_vol_spy`, `relative_vol_qqq` — benchmark-relative realized vol
-- `HV_30_pct`, `relative_vol_spy_pct`, `relative_vol_qqq_pct` — percentile ranks vs the scanned universe
-- `premium_slope`, `iv_slope`, `slope_divergence` — term-structure slope outputs
-- `premium_slope_pct`, `iv_slope_pct`, `slope_div_pct` — percentile-ranked term-structure metrics
-- `wp_14`, `wp_30`, `wp_over60_1`, `wp_over60_2` — window weights used in slope/scoring logic
-- `prem_efficiency_signal_{dte}` — categorical premium-efficiency signal for each DTE window
-
-In practice, the table is designed to support both:
-1. **cross-sectional ranking** across the full symbol universe, and  
-2. **single-name due diligence** by exposing every scoring input used to construct the final Premium and Risk dimensions.
-
-### CSV Output
-Saved as `data/option_scores_master_{size}_{option_date}.csv` — one file per run, date-stamped for run tracking.
-
----
+## 2. Dashboard & Output
 
 ### Dashboard
 **Design philosophy:** Move from *market-wide opportunity detection → targeted trade identification → deep-dive validation*.
@@ -242,13 +195,6 @@ on any candidate surfaced by the scatter or bar views. The `prem_efficiency_sign
 categorical columns per DTE window give an at-a-glance summary of whether each expiration 
 window is Rich or Cheap, Efficient or Thin.
 
-<!-- <div align="center">
-<img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_table_3.13.png?raw=true" alt="Raw Metrics Table" width="1500"/>
-<p><em>Figure 4: Full metrics table showing all scoring outputs per symbol. Sortable by any 
-column — premium buckets, IV/HV ratios, spike signals, term structure slopes, and efficiency 
-metrics are all accessible for manual review and validation of model-surfaced candidates.</em></p>
-</div> -->
-
 <div align="center">
   <a href="https://raw.githubusercontent.com/alfskoyen/options-alpha-scanner/main/assets/opt_scan_table_3.13.png">
     <img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_table_3.13.png?raw=true" alt="Premium to Risk Scatter — Global Universe" width="1500"/>
@@ -258,7 +204,54 @@ column — premium buckets, IV/HV ratios, spike signals, term structure slopes, 
 metrics are all accessible for manual review and validation of model-surfaced candidates.</em></p>
 </div>
 
+
+### Master DataFrame
+The scoring layer (`score_universe.py`) produces the **final master analytics dataset** used for visualization, ranking, and downstream assessment.
+
+This output is a **flattened, symbol-level table**, where each row represents a single symbol for the given run date and all derived metrics are consolidated into a single record.
+
+The resulting dataset contains ~100+ columns spanning premium, volatility, efficiency, spike diagnostics, and composite scoring outputs.
+
+**Structure:**
+- One row per symbol  
+- Cross-sectional features engineered across all DTE windows and strike buckets  
+- Fully self-contained — every scoring input and output is available at the symbol level
+
+Key column families include:
+
+- `symbol`, `date`, `spot` — identifier, run date, and underlying close
+- `premium_score`, `risk_score`, `quadrant` — final composite scoring outputs
+- `expiration_{dte}` — selected expiration mapped to each target window (`14`, `30`, `over60_1`, `over60_2`)
+- `premium_{bucket}_{dte}` — normalized put premium by strike bucket and DTE  
+  (`atm`, `slight`, `moderate`, `far` × 4 windows = 16 columns)
+- `iv_{bucket}_{dte}` — average implied volatility by strike bucket and DTE  
+  (`atm`, `slight`, `moderate`, `far` × 4 windows = 16 columns)
+- `put_atm_{dte}`, `call_atm_{dte}`, `straddle_{dte}` — ATM leg pricing and straddle components  
+  (3 metrics × 4 windows = 12 columns)
+- `prem_per_iv_primary_{dte}`, `prem_per_iv_sec_{dte}`, `prem_per_hv30_{dte}` — premium-efficiency metrics by window  
+  (3 metrics × 4 windows = 12 columns)
+- `HV_20`, `HV_30`, `HV_60` — realized volatility lookback windows
+- `atm_iv_{dte}`, `ratio_{dte}`, `spread_{dte}`, `signal_{dte}` — ATM IV vs HV diagnostics by DTE  
+  (4 metrics × 4 windows = 16 columns)
+- `spike_count_30`, `spike_ratio_30`, `spike_signal_30`, `avg_spike_pct_30`, `max_spike_pct_30` — 30-day spike diagnostics
+- `spike_count_60`, `spike_ratio_60`, `spike_signal_60`, `avg_spike_pct_60`, `max_spike_pct_60` — 60-day spike diagnostics
+- `spike_score_universe`, `spike_pct_universe`, `spike_signal_universe` — universe-relative spike ranking outputs
+- `relative_vol_spy`, `relative_vol_qqq` — benchmark-relative realized vol
+- `HV_30_pct`, `relative_vol_spy_pct`, `relative_vol_qqq_pct` — percentile ranks vs the scanned universe
+- `premium_slope`, `iv_slope`, `slope_divergence` — term-structure slope outputs
+- `premium_slope_pct`, `iv_slope_pct`, `slope_div_pct` — percentile-ranked term-structure metrics
+- `wp_14`, `wp_30`, `wp_over60_1`, `wp_over60_2` — window weights used in slope/scoring logic
+- `prem_efficiency_signal_{dte}` — categorical premium-efficiency signal for each DTE window
+
+In practice, the table is designed to support both:
+1. **cross-sectional ranking** across the full symbol universe, and  
+2. **single-name due diligence** by exposing every scoring input used to construct the final Premium and Risk dimensions.
+
+### CSV Output
+Saved as `data/option_scores_master_{size}_{option_date}.csv` — one file per run, date-stamped for run tracking.
+
 ---
+
 ## 3. Two-Dimensional Framework
 The core of the framework is a two-dimensional scoring model. Every symbol in the universe 
 is evaluated on two independent axes; how much premium is available, and how worrisome is the 
