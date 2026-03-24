@@ -605,6 +605,7 @@ dict_keys(['endpoint', 'message', 'data'])
         "rho": "0.00062"
     }
 ]
+```
 
 **Pipeline usage:** `HISTORICAL_OPTIONS` provides the full point-in-time options chain used to construct premium, implied volatility, DTE-window, and strike-bucket features for each symbol.
 
