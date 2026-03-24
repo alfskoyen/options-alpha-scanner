@@ -624,7 +624,7 @@ dict_keys(['endpoint', 'message', 'data'])
 ]
 ```
 
-**Pipeline usage:** `HISTORICAL_OPTIONS` provides the full point-in-time options chain used to construct premium, implied volatility, DTE-window, and delta/strike-bucket features for each symbol.
+> **Pipeline usage:** `HISTORICAL_OPTIONS` provides the full point-in-time options chain used to construct premium, implied volatility, DTE-window, and delta/strike-bucket features > for each symbol.
 
 
 ### API Design Decisions
