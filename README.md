@@ -519,8 +519,8 @@ Our Beta model and run of the pipeline is executed in a Jupyter Notebook housing
 
 | Endpoint | Purpose | Key Fields Used |
 |---|---|---|
-| `HISTORICAL_OPTIONS` | Options chain snapshot for a specific date | strike, bid, ask, IV, delta, vega, OI, expiration |
 | `TIME_SERIES_DAILY` | Daily closing prices for HV computation | `4. close` |
+| `HISTORICAL_OPTIONS` | Options chain snapshot for a specific date | strike, bid, ask, IV, delta, vega, OI, expiration |
 
 ---
 
@@ -567,6 +567,46 @@ dict_keys(['Meta Data', 'Time Series (Daily)'])
 
 > **Pipeline usage:** `spot = float(daily_data['Time Series (Daily)'][as_of_date]['4. close'])`
 > HV is computed from the full series via `parse_daily_closes()` which truncates at `as_of_date`.
+
+#### `HISTORICAL_OPTIONS` — Response Structure
+
+*Three top-level keys are returned. `endpoint` records the API route used, `message` provides request status metadata, and `data` contains the option chain snapshot as a list of contracts for the requested symbol and date.*
+
+```python
+dict_keys(['endpoint', 'message', 'data'])
+
+{
+    "endpoint": "/query?function=HISTORICAL_OPTIONS&symbol=TQQQ&date=2026-03-20&apikey=***",
+    "message": "success",
+    "data": [ ... ]
+}
+
+[
+    {
+        "contractID": "TQQQ260320C00022500",
+        "symbol": "TQQQ",
+        "expiration": "2026-03-20",
+        "strike": "22.50",
+        "type": "call",
+        "last": "20.67",
+        "mark": "20.38",
+        "bid": "19.70",
+        "bid_size": "177",
+        "ask": "21.05",
+        "ask_size": "148",
+        "volume": "31",
+        "open_interest": "490",
+        "date": "2026-03-20",
+        "implied_volatility": "0.01488",
+        "delta": "1.00000",
+        "gamma": "0.00000",
+        "theta": "-0.00224",
+        "vega": "0.00000",
+        "rho": "0.00062"
+    }
+]
+
+**Pipeline usage:** `HISTORICAL_OPTIONS` provides the full point-in-time options chain used to construct premium, implied volatility, DTE-window, and strike-bucket features for each symbol.
 
 
 ### API Design Decisions
