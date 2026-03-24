@@ -705,6 +705,7 @@ repo/
 
 ```python
 # av_api_calls.py
+_Set upon calling 'av_api_calls'_
 option_date  = '2026-02-27'   # options chain snapshot date
 as_of_date   = '2026-02-27'   # HV history truncation date
 BATCH_SIZE   = 37             # symbols per rate-limit batch
@@ -722,6 +723,28 @@ DTE_TOLERANCE = 13            # ± days to match chain expiry to target DTE
 # score_universe_IV.py
 RATIO_RICH_THRESHOLD = 1.20   # IV/HV above this = "Rich"
 PREM_EFF_THRESHOLD   = 0.60   # prem_per_iv above this = "Efficient"
+
+# ── Scoring weights — adjust to shift model emphasis ──────────────
+DTE_WEIGHTS = {
+    '14':       0.50,   # shorter expiry = higher theta focus
+    '30':       0.30,
+    'over60_1': 0.15,
+    'over60_2': 0.05,
+}
+
+STRIKE_WEIGHTS = {
+    'atm':      0.20,
+    'slight':   0.40,   # slight OTM = practical put-selling sweet spot
+    'moderate': 0.30,
+    'far':      0.15,
+}
+
+RISK_WEIGHTS = {
+    'iv_hv_ratio':    0.20,  # IV richness vs realized vol
+    'hv_30':          0.25,  # absolute vol level
+    'spike_wt_score': 0.40,  # spike behavior dominates — primary threat
+    'slope':          0.15,  # term structure divergence
+}
 ```
 
 ### Requirements
