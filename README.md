@@ -146,7 +146,8 @@ The primary view places every symbol in the scanned universe onto the two-dimens
 premium/risk plane. Each point is colored by quadrant — Q1 (mint, target), Q2 (amber, 
 rich but risky), Q3 (steel, low opportunity), Q4 (red, avoid). Quadrant dividers are drawn 
 at the universe median on each axis. The top symbols by combined score are labeled directly 
-on the chart, making the best setups immediately visible without any filtering. Future state -> Hovering over 
+on the chart, making the best setups immediately visible without any filtering. <br>
+**Future state** -> Hovering over 
 any point surfaces key metrics including IV/HV ratio, spike signal, relative vol vs SPY, 
 straddle premium, and term structure divergence.
 
