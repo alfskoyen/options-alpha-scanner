@@ -93,12 +93,6 @@ down to individual symbol detail, starting with where every symbol sits in the t
 scoring space, then drilling into ranked opportunity lists, term structure patterns, and raw 
 metric tables for deeper due diligence.
 
-Horizontal bar charts ranked by any metric...
-
-<div align="center">
-<img src="assets/bar_screenshot.png" width="90%">
-</div>
-
 ---
 
 ### Global Universe Scatter — Premium vs Risk
