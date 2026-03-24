@@ -57,13 +57,14 @@ surfacing where the options market is *overpaying relative to underlying volatil
 
 1. [Objective & North Star](#1-objective--north-star)
 2. [Output & Dashboard](#2-output--dashboard)
-3. [Two-Dimensional Model — Premium & Risk](#3-two-dimensional-model-—premium-&-risk)
-4. [Scoring Model](#4-scoring-model)
-5. [Pipeline Architecture](#5-pipeline-architecture)
-6. [Data Sources & API Pipeline](#6-data-sources--api-pipeline)
-7. [Key Assumptions](#7-key-assumptions)
-8. [Repository Structure](#8-repository-structure)
-9. [Configuration & Setup](#9-configuration--setup)
+3. [Two-Dimensional Model — Premium & Risk](#3-two-dimensional-framework)
+4. [Two-Dimensional Model — Premium & Risk](#4-feature-engineering—-premium-&-risk-dimensions)
+5. [Scoring Model](#5-scoring-model)
+6. [Pipeline Architecture](#6-pipeline-architecture)
+7. [Data Sources & API Pipeline](#7-data-sources--api-pipeline)
+8. [Key Assumptions](#8-key-assumptions)
+9. [Repository Structure](#9-repository-structure)
+10. [Configuration & Setup](#10-configuration--setup)
 
 ---
 ## 1. Objective & North Star
@@ -258,8 +259,7 @@ metrics are all accessible for manual review and validation of model-surfaced ca
 </div>
 
 ---
-## 3. Two-Dimensional Model — Premium & Risk
-
+## 3. Two-Dimensional Framework
 The core of the framework is a two-dimensional scoring model. Every symbol in the universe 
 is evaluated on two independent axes; how much premium is available, and how worrisome is the 
 vol environment. The scoring method places each symbol into one of four quadrants based on its position relative to 
@@ -280,11 +280,23 @@ the universe median on each axis.
                      LOW PREMIUM
 ```
 
-*The two sub-layers below — Premium (4a) and Risk (4b) — describe how each axis is built
-from raw API data before the scores are combined in the Scoring Model (Section 5).*
+*Secton 4 below, Feature Engineering — Premium & Risk Dimensions Premium describes how each axis is built
+from raw API data, then being combined in the Scoring Model (Section 5).*
 
+---
 
-### 3a. _Premium Dimension_
+## 4. Feature Engineering — Premium & Risk Dimensions
+
+Raw API data is transformed into two sets of derived features — one describing the 
+**premium opportunity** available in the options market, the other describing the 
+**risk environment** embedded in the vol regime. These features are the inputs to 
+the scoring model in Section 4.
+
+Each feature is computed per symbol, per DTE window, and stored as a flat column 
+in the master DataFrame. No scoring or ranking happens here — this section is purely 
+about measurement.
+
+## 4a. _Premium Dimension_
 
 ### DTE Windows
 
@@ -348,7 +360,7 @@ Each DTE window receives a categorical label combining IV/HV ratio and efficienc
 | Cheap + Thin | ratio < 1.20 AND prem_per_iv < 0.60 |
 
 
-### _3b. Risk Dimension_
+## _4b. Risk Dimension_
 
 ### Historical Volatility
 
@@ -397,7 +409,7 @@ Values above 1.0 mean the symbol is moving more than the broad market. This sepa
 
 ---
 
-## 4. Scoring Model
+## 5. Scoring Model
 
 ### Premium Score
 
@@ -446,6 +458,17 @@ risk_score = 0.20 × iv_hv_component
 | spike_ratio | Blended 30/60d frequency × log(magnitude) | Higher = more risk |
 | slope | ratio_14 − ratio_over60_1 — inverted term structure signals near-term stress | Higher = more risk |
 
+**Spike component weights** — recent activity weighted higher since near-term 
+spike behavior is more relevant for put-selling decisions than longer-term history:
+
+| Window | Weight |
+|---|---|
+| 30-day | 0.70 |
+| 60-day | 0.30 |
+
+*The same 0.70 / 0.30 weighting is applied in the universe-relative spike signal 
+computed in the scoring layer — both measures use consistent recency bias.*
+
 ### Quadrant Assignment
 
 Median split on both axes across the scanned universe:
@@ -469,7 +492,7 @@ Positive divergence means premium is growing faster across DTE than IV implies �
 
 
 ---
-## 5. Pipeline Architecture
+## 6. Pipeline Architecture
 
 The pipeline is multi-phased and accomplishes several goals including data capture, wrangling and parameter creation in four sequential layers.
 Our Beta model and run of the pipeline is executed in a Jupyter Notebook housing certain key arguments for the output file.
@@ -512,7 +535,7 @@ Our Beta model and run of the pipeline is executed in a Jupyter Notebook housing
 
 ---
 
-## 6. Data Sources & API Pipeline
+## 7. Data Sources & API Pipeline
 
 ### Data Source
 
@@ -627,7 +650,7 @@ dict_keys(['endpoint', 'message', 'data'])
 
 ---
 
-## 7. Key Assumptions
+## 8. Key Assumptions
 
 ### Premium Assumptions
 
@@ -658,7 +681,7 @@ dict_keys(['endpoint', 'message', 'data'])
 
 ---
 
-## 8. Repository Structure
+## 9. Repository Structure
 
 ```
 repo/
@@ -683,7 +706,7 @@ repo/
 
 ---
 
-## 9. Configuration & Setup
+## 10. Configuration & Setup
 
 ### Key Parameters
 
