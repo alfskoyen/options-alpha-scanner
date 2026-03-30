@@ -12,7 +12,19 @@
 
 > **Active development** — working pipeline scanning ~600 symbols. 
 > Scoring methodology and dashboard under continuous iteration.
-> Recent Improvements:
+> **Recent Improvements:**
+> - **45-day DTE window added** — improves term structure coverage for monthly-only
+>   chains (e.g. KLAC, MCHP) where 14-day and 30-day windows may find no liquid expiration
+> - **Weight rescaling in scoring** — when a DTE window is absent for a symbol, its
+>   weight is redistributed proportionally across available windows so premium scores
+>   remain comparable across liquid and illiquid chains
+> - **Smarter expiration assignment** — `over60_1` and `over60_2` now snap to standard
+>   monthly expirations (3rd Friday) beyond 60 and 85 days respectively, improving
+>   consistency across the universe and filtering out non-standard expirations
+> - **Holiday-aware expiration detection** — expiration identification now accepts
+>   Thursday settlements when the standard 3rd Friday falls on a market holiday
+>   (e.g. Juneteenth June 19 → Thursday June 18), preventing missed windows on
+>   affected symbols
 
 --- 
 
