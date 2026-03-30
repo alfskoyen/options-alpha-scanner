@@ -55,7 +55,7 @@ surfacing where the options market is *overpaying relative to underlying volatil
 
 ## Table of Contents
 
-1. [Objective & North Star](#1-objective--north-star)
+1. [The Project's North Star](#1-objective--north-star)
 2. [Output & Dashboard](#2-output--dashboard)
 3. [Two-Dimensional Model — Premium & Risk](#3-two-dimensional-framework)
 4. [Two-Dimensional Model — Premium & Risk](#4-feature-engineering—-premium-&-risk-dimensions)
@@ -67,7 +67,7 @@ surfacing where the options market is *overpaying relative to underlying volatil
 10. [Configuration & Setup](#10-configuration--setup)
 
 ---
-## 1. Objective & North Star
+## 1. The Project's North Star
 The primary objective of this project is to systematically identify improved put-selling opportunities across the US equity universe on any given trading day. 
 Rather than monitoring only a handful of exhange symbols using a limited set of metrics, this framework builds a two-dimensional scoring model for the global universe of equities; scoring 
 - how much premium is available in comparison to the present market and volatility profile, and
