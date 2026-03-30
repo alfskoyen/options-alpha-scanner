@@ -139,9 +139,9 @@ enabling rapid triage across dozens of candidates.
   <a href="https://raw.githubusercontent.com/alfskoyen/options-alpha-scanner/main/assets/opt_scan_bar_prem_3.13.png">
     <img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_bar_prem_3.13.png?raw=true" alt="Premium to Risk Scatter — Global Universe" width="1500"/>
   </a>
-  <p><em>Figure 2: Ranked bar chart view showing the lowest risk score symbols across the 
-universe. Bar color reflects quadrant membership — Q1 names (mint) in a low-risk ranking 
-represent the cleanest put-selling setups where premium and safety align.</em></p>
+  <p><em>Figure 2: Example -> Ranked bar chart displaying the largest premium scores globally. 
+    Bar color reflects the quadrant membership, e.g., Q1 colored mint, Q2 colored orange, indicating the 
+    shift in risk ranking. Q1 locatd symbols represent the cleanest put-selling setups where premium and safety align.</em></p>
 </div>
 
 ---
