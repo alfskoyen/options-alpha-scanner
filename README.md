@@ -106,7 +106,7 @@ defined by the universe distribution on that day, not a fixed threshold.
 Scoring and metric outputs from the model are visualized across a five-section interactive 
 dashboard built in Plotly. The dashboard is designed to move from the macro universe view 
 down to individual symbol detail, starting with where every symbol sits in the two-dimensional 
-scoring space, then drilling into ranked opportunity lists, term structure patterns, and raw 
+scoring space, then drilling into ranked opportunity lists, term structure patterns, and  
 metric tables for deeper due diligence.
 
 ---
@@ -114,7 +114,7 @@ metric tables for deeper due diligence.
 ### Global Universe Scatter — Premium vs Risk
 The primary view places every symbol in the scanned universe onto the two-dimensional 
 premium/risk plane. Each point is colored by quadrant — Q1 (mint, target), Q2 (amber, 
-rich but risky), Q3 (steel, low opportunity), Q4 (red, avoid). Quadrant dividers are drawn 
+rich but risky), Q3 (steel, low opportunity), Q4 (red, avoid). Quadrant dividers are dn 
 at the universe median on each axis. The top symbols by combined score are labeled directly 
 on the chart, making the best setups immediately visible without any filtering. <br>
 **Future state** -> Hovering over 
@@ -122,15 +122,15 @@ any point surfaces key metrics including IV/HV ratio, spike signal, relative vol
 straddle premium, and term structure divergence.
 
 <!-- <div align="center">
-<img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_scatter_3.13.png?raw=true" alt="Premium to Risk Scatter — Global Universe" width="1500"/>
+<img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_scatter_3.13.png?=true" alt="Premium to Risk Scatter — Global Universe" width="1500"/>
 <p><em>Figure 1: Premium vs Risk scatter across the full ~600 symbol universe. Each point 
 represents one symbol, colored by quadrant. Q1 (top-left) symbols offer the highest premium 
 relative to their risk score — the primary target zone for put-selling.</em></p>
 </div> -->
 
 <div align="center">
-  <a href="https://raw.githubusercontent.com/alfskoyen/options-alpha-scanner/main/assets/opt_scan_scatter_3.13.png">
-    <img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_scatter_3.13.png?raw=true" alt="Premium to Risk Scatter — Global Universe" width="1500"/>
+  <a href="https://.githubusercontent.com/alfskoyen/options-alpha-scanner/main/assets/opt_scan_scatter_3.13.png">
+    <img src="https://github.com/alfskoyen/options-alpha-scanner/blob/main/assets/opt_scan_scatter_3.13.png?=true" alt="Premium to Risk Scatter — Global Universe" width="1500"/>
   </a>
   <p><em>Figure 1: Premium vs Risk scatter across the full ~600 symbol universe. Each point 
 represents one symbol, colored by quadrant. Q1 (top-left) symbols offer the highest premium 
@@ -756,8 +756,9 @@ PREM_EFF_THRESHOLD   = 0.60   # prem_per_iv above this = "Efficient"
 
 # ── Scoring weights — adjust to shift model emphasis ──────────────
 DTE_WEIGHTS = {
-    '14':       0.50,   # shorter expiry = higher theta focus
-    '30':       0.30,
+    '14':       0.225,   # shorter expiry = higher theta focus
+    '30':       0.35,
+    '45':       0.225 
     'over60_1': 0.15,
     'over60_2': 0.05,
 }
@@ -770,8 +771,8 @@ STRIKE_WEIGHTS = {
 }
 
 PREM_WEIGHTS = {        # Premium Score weights adjusting impact of feature inputs
-    'raw': 0.75,
-    'eff':       0.25,
+    'raw':  0.75,
+    'eff':  0.25,
 }
 
 RISK_WEIGHTS = {
