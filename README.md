@@ -436,10 +436,11 @@ premium_score = StandardScaler(0.60 × raw_score + 0.40 × eff_score)
 
 | DTE | Weight |
 |---|---|
-| 14 | 0.50 |
-| 30 | 0.30 |
-| over60_1 | 0.15 |
-| over60_2 | 0.05 |
+| 14 | 0.225 |
+| 30 | 0.35  |
+| 45 | 0.225 |
+| over60_1   | 0.15 |
+| over60_2   | 0.05 |
 
 **Strike bucket weights** (rewards OTM premium — ATM is always available, the signal is in Slight/Moderate):
 
@@ -492,7 +493,7 @@ Median split on both axes across the scanned universe:
 
 ### Term Structure
 
-Linear regression slope of bucket-weighted premium and ATM IV across all 4 DTE windows, using nominal DTE values as x-axis `[14, 30, 63, 91]`. Requires minimum 3 of 4 DTE windows populated.
+Linear regression slope of bucket-weighted premium and ATM IV across all 5 DTE windows, using nominal DTE values as x-axis `[14, 30, 45, 63, 91]`. Requires minimum 3 of 5 DTE windows populated.
 
 ```
 slope_divergence = premium_slope − iv_slope
