@@ -26,19 +26,18 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import Input, Output, dcc, html
 
-from data import load_data, prep_data, get_scan_meta
+from data_prep import load_data, prep_data, get_scan_meta
 from theme import (
     BG, PANEL, BORDER, CROSS, TEXT_PRI, TEXT_SEC,
     ACCENT, Q_COLORS, Q_LABELS, MONO,
 )
-# from scatter_plotly        import build_scatter_global, build_scatter_quadrant
-from charts.scatter_plotly import _scatter_global_view, _scatter_quadrant_top_n
-from charts.bar_plotly_II           import build_bar
-from charts.histo_plotly     import build_histogram
-from charts.term_struc_plotly_II import (
+
+from charts.scatter_plotly_prod   import _scatter_global_view, _scatter_quadrant_top_n
+from charts.bar_plotly_prod   import build_bar
+from charts.histo_plotly_prod     import build_histogram
+from charts.term_struc_plotly_prod import (
     build_term_structure, build_hv_term_structure, build_iv_hv_overlay,)
-# from table_plotly          import register_table_callbacks
-from charts.table_plotly import register_table_callbacks, _build_datatable
+from charts.table_plotly_prod import register_table_callbacks, _build_datatable
 
 # ── Bootstrap ─────────────────────────────────────────────────────
 df   = prep_data(load_data())
