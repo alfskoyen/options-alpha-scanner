@@ -1,7 +1,7 @@
 """
 score_universe.py
 ------------------
-The scoring methodology is a blend of two risk scores across two axes:
+The scoring methodogoly is a blend of two risk scores across two axes:
 Premium and Risk. 
 
   PREMIUM — how much premium is available, efficiency-weighted
@@ -30,8 +30,9 @@ scaler = StandardScaler()
 
 # DTE weights for premium score — shorter term to experiation = higher weight (theta focus)
 DTE_WEIGHTS = {
-    '14':       0.50,
-    '30':       0.30,
+    '14':       0.225,
+    '30':       0.35,
+    '45':       0.225,
     'over60_1': 0.15,
     'over60_2': 0.05,
 }
@@ -43,12 +44,18 @@ STRIKE_WEIGHTS = {
     'far':      0.15,
 }
 
+# Premium scoring weights
+PREM_WEIGHTS = {
+    'raw':  0.75,
+    'eff':  0.25,
+}
+
 # Risk component weights
 RISK_WEIGHTS = {
-    'iv_hv_ratio':    0.2,
-    'hv_30':          0.25,
+    'iv_hv_ratio': 0.2,
+    'hv_30':       0.25,
     'spike_wt_score': 0.4,
-    'slope':          0.15,
+    'slope':       0.15,
 }
 
 # Term Structure weights — ATM anchored, small Slight contribution
@@ -71,7 +78,6 @@ def pct_rank(series):
 
 ### --------------------------------------------------------------
 ### --- Premium Score Builder ------------------------------------
-
 def compute_premium_score(df):
     """
     Weighted composite premium score across DTE windows and delta/strike buckets.
@@ -81,25 +87,53 @@ def compute_premium_score(df):
                                 (how much premium relative to what IV implies)
     Final = 0.60 * raw_score + 0.40 * efficiency_score, standardized.
     """
-    dte_list = ['14', '30', 'over60_1', 'over60_2']
+    dte_list = ['14', '30', '45', 'over60_1', 'over60_2']
     buckets  = list(STRIKE_WEIGHTS.keys())
 
     # -- raw premium composite ------------------------------------------------
     raw_scores = pd.Series(0.0, index=df.index)
-    for dte, dt_weight in DTE_WEIGHTS.items():
-        wp = pd.Series(0.0, index=df.index)
-        for strike_bucket, st_weight in STRIKE_WEIGHTS.items():
-            col = 'premium_{}_{}'.format(strike_bucket, dte)  ## create prem. column per strike / dta buckets
-            if col in df.columns:
-                wp += df[col].fillna(0) * st_weight  ## weighed score is premium * strike weight
-        raw_scores += wp * dt_weight                 ## raw score is weighted strike * dte weight
+
+    for idx in df.index:
+        row          = df.loc[idx]
+        active_dtes  = {}   # dte -> (weighted_premium, dt_weight)
+
+        for dte, dt_weight in DTE_WEIGHTS.items():
+            wp           = 0.0
+            has_any_data = False
+
+            for strike_bucket, st_weight in STRIKE_WEIGHTS.items():
+                col = 'premium_{}_{}'.format(strike_bucket, dte)  ## create prem. column per delta-strike / dte buckets
+                if col in df.columns and pd.notna(row.get(col)):
+                    wp += row[col] * st_weight  ## weighed score is premium * strike weight
+                    has_any_data  = True
+            
+            if has_any_data:
+                active_dtes[dte] = (wp, dt_weight)
+
+        # rescale weights across available DTE windows only
+        if active_dtes:
+            total_weight = sum(w for _, w in active_dtes.values())
+            for dte, (wp, dt_weight) in active_dtes.items():
+                rescaled_weight  = dt_weight / total_weight
+                raw_scores[idx] += wp * rescaled_weight                 ## raw score is weighted strike * dte weight
 
     # -- efficiency composite (prem_per_iv_primary) ---------------------------
     eff = pd.Series(0.0, index=df.index)
-    for dte, dw in DTE_WEIGHTS.items():
-        col = 'prem_per_iv_primary_{}'.format(dte)
-        if col in df.columns:
-            eff += df[col].fillna(0) * dw
+
+    for idx in df.index:    ## determine row count in df of master data
+        row         = df.loc[idx]
+        active_dtes = {}
+
+        for dte, dt_weight in DTE_WEIGHTS.items():  ## iterate through each DTE column for prem_per, and if not NaN, place into dict.
+            col = 'prem_per_iv_primary_{}'.format(dte)
+            if col in df.columns and pd.notna(row.get(col)):
+                active_dtes[dte] = (row[col], dt_weight)  ## add to dict, the metric value and related weight.
+
+        if active_dtes:
+            total_weight = sum(w for _, w in active_dtes.values())  ## sum the second values / weights in dict
+            for dte, (val, dt_weight) in active_dtes.items():
+                rescaled_weight = dt_weight / total_weight    ## rescale proportionally, by dt_weight over total weight. If all weights present, same value. 
+                eff[idx]       += val * rescaled_weight
 
     # -- standardize each component -------------------------------------------
     scaler = StandardScaler()
@@ -108,7 +142,7 @@ def compute_premium_score(df):
     eff_scaled = scaler.fit_transform(eff.values.reshape(-1, 1)).flatten()
 
     # -- combine --------------------------------------------------------------
-    combined = 0.60 * raw_scaled + 0.40 * eff_scaled
+    combined = PREM_WEIGHTS.get('raw') * raw_scaled + PREM_WEIGHTS.get('eff') * eff_scaled  ## calc. combined score with prem scoring weights
 
     # -- standardize final combined score -------------------------------------
     final = scaler.fit_transform(pd.Series(combined).values.reshape(-1, 1)).flatten()
@@ -116,9 +150,8 @@ def compute_premium_score(df):
     return pd.Series(final, index=df.index).round(4)
 
 
-### ---------------------------------------------------------------
-### --- Risk Score Builder-----------------------------------------
-
+### ------------------------------------------------------------------
+### --- Risk Score Builder--------------------------------------------
 def compute_risk_score(df):
     """
     Composite risk score — higher = more risk = penalizes premium score.
@@ -181,7 +214,7 @@ def compute_risk_score(df):
 ### =============================================================================
 ### --- Term Structure ---
 
-Term_Struc_X = [14, 30, 63, 91]   # nominal DTE x-axis for term structure regression
+Term_Struc_X = [14, 30, 45, 63, 91]   # nominal DTE x-axis for term structure regression
 
 def term_slope(x, y):
     """
@@ -211,14 +244,14 @@ def compute_term_structure(df):
     All three ranked as percentiles vs universe.
     """
 
-    dte_labels = ['14', '30', 'over60_1', 'over60_2']   # separate from x-axis list
+    dte_labels = ['14', '30', '45', 'over60_1', 'over60_2']   # separate from x-axis list
     records    = []
 
     for _, row in df.iterrows():
         premium_y = []
         iv_y      = []
 
-        for strike_cat, act_days in zip(['14', '30', 'over60_1', 'over60_2'], Term_Struc_X):
+        for strike_cat, act_days in zip(['14', '30', '45', 'over60_1', 'over60_2'], Term_Struc_X):
     
             weighted_prem = sum(
                 row.get('premium_{}_{}'.format(b, strike_cat), 0) * bw
@@ -238,8 +271,9 @@ def compute_term_structure(df):
             'slope_divergence': round(div,         6) if not np.isnan(div)        else np.nan,
             'wp_14':            round(premium_y[0], 4),
             'wp_30':            round(premium_y[1], 4),
-            'wp_over60_1':      round(premium_y[2], 4),
-            'wp_over60_2':      round(premium_y[3], 4),
+            'wp_45':            round(premium_y[2], 4),
+            'wp_over60_1':      round(premium_y[3], 4),
+            'wp_over60_2':      round(premium_y[4], 4),
         })
 
     ts = pd.DataFrame(records)
@@ -252,7 +286,6 @@ def compute_term_structure(df):
 
 # =============================================================================
 # --- Quadrant Assignment ------------------------------------------
-
 
 def assign_quadrant(premium_score, risk_score):
     pm = premium_score.median()
@@ -314,7 +347,7 @@ def score_universe(master_df):
     df = df.merge(ts, on='symbol', how='left')
 
     ## -- Determine premium efficiency signal per DTE window (assign) -----------------------------
-    for dte in ['14', '30', 'over60_1', 'over60_2']:
+    for dte in ['14', '30', '45', 'over60_1', 'over60_2']:
         ratio_col  = 'ratio_{}'.format(dte)
         prem_col   = 'prem_per_iv_primary_{}'.format(dte)
         signal_col = 'prem_efficiency_signal_{}'.format(dte)  ## naming of new metric
@@ -370,20 +403,20 @@ def score_universe(master_df):
 # Summary View
 # =============================================================================
 
-# def score_summary(scored_df):
-#     """
-#     Clean summary — key columns only for quick review.
-#     """
-#     cols = [
-#         'symbol', 'quadrant', 'premium_score', 'risk_score',
-#         # straddle efficiency
-#         'prem_per_iv_primary_14', 'prem_per_iv_primary_30',
-#         'prem_per_hv30_14',       'prem_per_hv30_30',
-#         # term structure
-#         'premium_slope', 'iv_slope', 'slope_divergence', 'slope_div_pct',
-#         # risk
-#         'HV_30', 'ratio_30', 'spike_ratio', 'spike_signal',
-#     ]
-#     available = [c for c in cols if c in scored_df.columns]
-#     return scored_df[available].reset_index(drop=True)
+def score_summary(scored_df):
+    """
+    Clean summary — key columns only for quick review.
+    """
+    cols = [
+        'symbol', 'quadrant', 'premium_score', 'risk_score',
+        # straddle efficiency
+        'prem_per_iv_primary_14', 'prem_per_iv_primary_30',
+        'prem_per_hv30_14',       'prem_per_hv30_30',
+        # term structure
+        'premium_slope', 'iv_slope', 'slope_divergence', 'slope_div_pct',
+        # risk
+        'HV_30', 'ratio_30', 'spike_wt_score', 'spike_signal',
+    ]
+    available = [c for c in cols if c in scored_df.columns]
+    return scored_df[available].reset_index(drop=True)
 
