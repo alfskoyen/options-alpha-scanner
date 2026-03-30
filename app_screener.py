@@ -257,7 +257,7 @@ header = html.Div(
         html.Span("◈", style={"color": ACCENT, "fontSize": "22px"}),
         html.Div([
             html.Div(
-                "OPTIONS SCANNER: PUT EXHANGE - model alf 1.0",
+                "OPTIONS SCANNER: PUT EXHANGE - model alf 1.1",
                 style={"fontFamily": MONO, "letterSpacing": "0.1em",
                        "color": TEXT_PRI, "fontWeight": "600", "fontSize": "18px"},
             ),

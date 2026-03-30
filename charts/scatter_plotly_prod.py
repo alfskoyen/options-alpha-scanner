@@ -259,7 +259,7 @@ def _scatter_global_view(df: pd.DataFrame, top_n: int = 20) -> go.Figure:
         **_base_layout(
             df,
             title_text=(
-                "<b>Option Premium to Risk Analysis · Top N Global Premium/Risk Score Spread (Alf 1.0)</b><br>"
+                "<b>Option Premium to Risk Analysis · Top N Global Premium/Risk Score Spread</b><br>"
                 f"<span style='font-size:14px;color:#6b7394'>"
                 f"n = {len(df)} symbols    "
                 f"top {top_n} labeled globally by Premium − Risk Spread"
