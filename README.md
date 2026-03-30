@@ -21,8 +21,8 @@
 This framework ranks the entire market using a **two-dimensional model (Premium vs Risk)**;
 surfacing where the options market is *overpaying relative to underlying volatility conditions*.
 
-> Instead of asking “is this option attractive?”, this model asks:  
-> **“Is this among the best opportunities in the entire market today?”**
+> Instead of asking “is this option attractive?”, the approach asks:  
+> **“Is this among the best opportunities in the market today?”**
 
 <br>
 
@@ -68,17 +68,20 @@ surfacing where the options market is *overpaying relative to underlying volatil
 
 ---
 ## 1. The Project's North Star
-The primary objective of this project is to systematically identify improved put-selling opportunities across the US equity universe on any given trading day. 
-Rather than monitoring only a handful of exhange symbols using a limited set of metrics, this framework builds a two-dimensional scoring model for the global universe of equities; scoring 
+The primary objective of this project is to systematically identify put-selling opportunities across the US equity universe on any given trading day. 
+Rather than monitoring only a handful of exhange symbols using a limited set of metrics, this framework builds a two-dimensional scoring model for the global universe of equities; by scoring: 
 - how much premium is available in comparison to the present market and volatility profile, and
-- how much risk is embedded in the vol environment, quickly scoring and placing the global set into a quadrant based profile. 
+- how much risk is embedded in the vol environment, quickly scoring and placing the global population into a quadrant based profile. 
 
-**Our north star is Q1: High Premium / Low Risk.**
+**Our North Star is Q1: High Premium / Low Risk.**
 
-These are symbols where the options market is offering meaningful premium relative to spot price, while the underlying volatility environment does not justify exceptional caution. 
+These are symbols where the options market is offering meaningful premium relative to spot price, while the underlying volatility environment is lower than the built in level of systemic caution. 
 They represent the best asymmetric put-selling setups, by first being paid well for risk that, on a relative basis, is below the universe median.
 
-The framework is intentionally cross-sectional. Every score is relative to the scanned universe on that specific date, not absolute. A premium score of 0.85 means the symbol is in the 85th percentile of the universe — not that it meets some fixed threshold. This makes the model self-calibrating across different vol regimes.
+The framework is intentionally cross-sectional. Every score is relative to the scanned universe on that specific date, not absolute. Scores are standardized 
+(z-scored) across the universe, a premium score of +1.0 means the symbol sits one standard deviation above the universe mean, while -1.0 means one standard 
+deviation below. This makes the model self-calibrating across different vol regimes, what constitutes "high premium" on a calm day vs a volatile day is 
+defined by the universe distribution on that day, not a fixed threshold.
 
 ---
 
