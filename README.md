@@ -12,6 +12,19 @@
 
 > **Active development** — working pipeline scanning ~600 symbols. 
 > Scoring methodology and dashboard under continuous iteration.
+> **Recent Improvements:**
+> - **45-day DTE window added** — improves term structure coverage for monthly-only
+>   chains (e.g. KLAC, MCHP) where 14-day and 30-day windows may find no liquid expiration
+> - **Weight rescaling in scoring** — when a DTE window is absent for a symbol, its
+>   weight is redistributed proportionally across available windows so premium scores
+>   remain comparable across liquid and illiquid chains
+> - **Smarter expiration assignment** — `over60_1` and `over60_2` now snap to standard
+>   monthly expirations (3rd Friday) beyond 60 and 85 days respectively, improving
+>   consistency across the universe and filtering out non-standard expirations
+> - **Holiday-aware expiration detection** — expiration identification now accepts
+>   Thursday settlements when the standard 3rd Friday falls on a market holiday
+>   (e.g. Juneteenth June 19 → Thursday June 18), preventing missed windows on
+>   affected symbols
 
 --- 
 
@@ -211,7 +224,7 @@ metrics are all accessible for manual review and validation of model-surfaced ca
 ### Master DataFrame
 The scoring layer (`score_universe.py`) produces the **final master analytics dataset** used for visualization, ranking, and downstream assessment.
 
-This output is a **flattened, symbol-level table**, where each row represents a single symbol for the given run date and all derived metrics are consolidated into a single record.
+This output is a **flattened, symbol-level table**, where each row represents a single symbol for the given run date and all derived metrics are consolidated into a single row.
 
 The resulting dataset contains ~100+ columns spanning premium, volatility, efficiency, spike diagnostics, and composite scoring outputs.
 
@@ -224,18 +237,18 @@ Key column families include:
 
 - `symbol`, `date`, `spot` — identifier, run date, and underlying close
 - `premium_score`, `risk_score`, `quadrant` — final composite scoring outputs
-- `expiration_{dte}` — selected expiration mapped to each target window (`14`, `30`, `over60_1`, `over60_2`)
+- `expiration_{dte}` — selected expiration mapped to each target window (`14`, `30`, '45', `over60_1`, `over60_2`)
 - `premium_{bucket}_{dte}` — normalized put premium by strike bucket and DTE  
   (`atm`, `slight`, `moderate`, `far` × 4 windows = 16 columns)
 - `iv_{bucket}_{dte}` — average implied volatility by strike bucket and DTE  
   (`atm`, `slight`, `moderate`, `far` × 4 windows = 16 columns)
 - `put_atm_{dte}`, `call_atm_{dte}`, `straddle_{dte}` — ATM leg pricing and straddle components  
-  (3 metrics × 4 windows = 12 columns)
+  (3 metrics × 5 windows = 15 columns)
 - `prem_per_iv_primary_{dte}`, `prem_per_iv_sec_{dte}`, `prem_per_hv30_{dte}` — premium-efficiency metrics by window  
-  (3 metrics × 4 windows = 12 columns)
+  (3 metrics × 4 windows = 15 columns)
 - `HV_20`, `HV_30`, `HV_60` — realized volatility lookback windows
 - `atm_iv_{dte}`, `ratio_{dte}`, `spread_{dte}`, `signal_{dte}` — ATM IV vs HV diagnostics by DTE  
-  (4 metrics × 4 windows = 16 columns)
+  (4 metrics × 5 windows = 16 columns)
 - `spike_count_30`, `spike_ratio_30`, `spike_signal_30`, `avg_spike_pct_30`, `max_spike_pct_30` — 30-day spike diagnostics
 - `spike_count_60`, `spike_ratio_60`, `spike_signal_60`, `avg_spike_pct_60`, `max_spike_pct_60` — 60-day spike diagnostics
 - `spike_score_universe`, `spike_pct_universe`, `spike_signal_universe` — universe-relative spike ranking outputs
@@ -243,7 +256,7 @@ Key column families include:
 - `HV_30_pct`, `relative_vol_spy_pct`, `relative_vol_qqq_pct` — percentile ranks vs the scanned universe
 - `premium_slope`, `iv_slope`, `slope_divergence` — term-structure slope outputs
 - `premium_slope_pct`, `iv_slope_pct`, `slope_div_pct` — percentile-ranked term-structure metrics
-- `wp_14`, `wp_30`, `wp_over60_1`, `wp_over60_2` — window weights used in slope/scoring logic
+- `wp_14`, `wp_30`, `wp_45`, `wp_over60_1`, `wp_over60_2` — window weights used in slope/scoring logic
 - `prem_efficiency_signal_{dte}` — categorical premium-efficiency signal for each DTE window
 
 In practice, the table is designed to support both:
@@ -296,12 +309,13 @@ about measurement.
 
 ### DTE Windows
 
-Four days-to-expiration windows are targeted per symbol, attempting consistency across the global set. 
+Five days-to-expiration windows are targeted per symbol, attempting consistency across the global set. 
 
 | Window | Selection Method |
 |---|---|
 | 14-day | Weekday-aware Friday snapping — Mon/Tue/Wed → next Friday, Thu/Fri → Friday after next |
 | 30-day | Mechanical offset, nearest chain expiry within ±13 days |
+| 45-day | Mechanical offset, nearest chain expiry within ±13 days |
 | over60_1 | First standard expiration beyond 60 days (auto-discovered from chain) |
 | over60_2 | Second standard expiration beyond 60 days |
 
@@ -715,13 +729,25 @@ BATCH_SIZE   = 37             # symbols per rate-limit batch
 PAUSE_SECS   = 61             # seconds between batches
 
 # option_prem_iv_builder_V.py
+DTE_WINDOWS   = [14, 30, 45, 'over60_1', 'over60_2']    # target expirations in days
+
+OVER60_MIN    = 60                                      ## minimum days out for the dynamic long-dated window
+OVER60_MAX    = 87                                      ## maximum days out for over60_1 — if first expiry beyond this, skip to over60_2
+
 DELTA_BUCKETS = {
     'ATM':      (0.40, 0.60),
     'Slight':   (0.25, 0.40),
     'Moderate': (0.15, 0.25),
     'Far':      (0.05, 0.15),
 }
-DTE_TOLERANCE = 13            # ± days to match chain expiry to target DTE
+
+TOLERANCE_BY_WINDOW = {    ## ± days to accept around each target
+        14:         12,    # keep as-is — NaN if no weekly nearby
+        30:         12,
+        45:         12,
+        'over60_1': 999,
+        'over60_2': 999,
+    }
 
 # score_universe_IV.py
 RATIO_RICH_THRESHOLD = 1.20   # IV/HV above this = "Rich"
@@ -742,6 +768,11 @@ STRIKE_WEIGHTS = {
     'far':      0.15,
 }
 
+PREM_WEIGHTS = {        # Premium Score weights adjusting impact of feature inputs
+    'raw': 0.75,
+    'eff':       0.25,
+}
+
 RISK_WEIGHTS = {
     'iv_hv_ratio':    0.20,  # IV richness vs realized vol
     'hv_30':          0.25,  # absolute vol level
@@ -760,6 +791,7 @@ scikit-learn
 requests
 python-dotenv
 plotly
+dash
 ipython
 ```
 
