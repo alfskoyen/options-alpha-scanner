@@ -22,7 +22,7 @@ import time
 import traceback
 sys.tracebacklimit = 0 # turn off the error tracebacks
 
-import option_prem_iv_builder_V
+import option_prem_iv_builder_VI
 import hist_vol_iv_risk_builder_III
 
 
@@ -30,7 +30,7 @@ import hist_vol_iv_risk_builder_III
 headers = {'From':'alfhaugen@gmail.com'}
 api_root = 'https://www.alphavantage.co'
 endpoint = '/query?'
-
+INTER_CALL_DELAY = .45   # seconds between each API call — smooths burst pattern
 
 ### --- API Calls ---------------------------------------------------
 def av_api_data(ticker, date, api_key):
@@ -47,8 +47,9 @@ def av_api_data(ticker, date, api_key):
 
 
 def hist_options_call(ticker, date, api_key):
+    time.sleep(INTER_CALL_DELAY)
     opt_params = {'function': 'HISTORICAL_OPTIONS', ### or REALTIME_OPTIONS
-	# opt_params = {'function': 'REALTIME_OPTIONS', ### or HISTORICAL_OPTIONS 
+    # opt_params = {'function': 'REALTIME_OPTIONS', ### or HISTORICAL_OPTIONS 
                 'symbol':ticker,
                 'date': date, ### for Historical
                 # 'require_greeks': 'true',   ### for Real Time
@@ -66,6 +67,7 @@ def hist_options_call(ticker, date, api_key):
 
 
 def hist_time_series_call(ticker, date, api_key):
+    time.sleep(INTER_CALL_DELAY)
     mkt_params = {'function': 'TIME_SERIES_DAILY', ### below params for Time Series
         'symbol': ticker,
           # 'interval': '5min',
@@ -117,7 +119,7 @@ def option_analysis_scan(ticker_list, api_key, option_date, as_of_date):
     run_start = time.time()   # <- start timer before the loop
     api_key = api_key
 
-    ## fetch benchmark HV once before scanning the universe ----------- -> New
+    ## fetch benchmark HV once before scanning the universe ----------------- -> New
     print("Fetching benchmark HV (SPY, QQQ)")
     spy_contracts, spy_daily  = av_api_data('SPY',  option_date, api_key)
     qqq_contracts, qqq_daily  = av_api_data('QQQ',  option_date, api_key)
@@ -127,8 +129,8 @@ def option_analysis_scan(ticker_list, api_key, option_date, as_of_date):
     spy_spot = float(spy_daily['Time Series (Daily)'][as_of_date]['4. close'])  ### Grab Spot Price for date
     qqq_spot = float(qqq_daily['Time Series (Daily)'][as_of_date]['4. close'])  ### Grab Spot Price for date
 
-    spy_put  = option_prem_iv_builder_V.build_premium_buckets(spy_cont_data,  'SPY',  option_date, spy_spot,  'put')
-    qqq_put  = option_prem_iv_builder_V.build_premium_buckets(qqq_cont_data,  'QQQ',  option_date, qqq_spot,  'put')
+    spy_put  = option_prem_iv_builder_VI.build_premium_buckets(spy_cont_data,  'SPY',  option_date, spy_spot,  'put')
+    qqq_put  = option_prem_iv_builder_VI.build_premium_buckets(qqq_cont_data,  'QQQ',  option_date, qqq_spot,  'put')
 
     spy_hv_result, _ = hist_vol_iv_risk_builder_III.build_hv_score(spy_daily, spy_put['summary'],  'SPY',  as_of_date)
     qqq_hv_result, _ = hist_vol_iv_risk_builder_III.build_hv_score(qqq_daily, qqq_put['summary'],  'QQQ',  as_of_date)
@@ -145,7 +147,7 @@ def option_analysis_scan(ticker_list, api_key, option_date, as_of_date):
         mins, secs    = divmod(int(elapsed_total), 60)
         
         # clear_output(wait=True)
-        if ind % 2 == 0:   # clear every other iteration
+        if ind % 3 == 0:   # clear every other iteration
             clear_output(wait=True)
         print("Scanning {} symbols".format(len(ticker_list)))
         print("="*40)
@@ -177,23 +179,15 @@ def option_analysis_scan(ticker_list, api_key, option_date, as_of_date):
         
             ### Build option premium buckets -------------------------------------------
             print("Building Option Premium Data")
-            # opt_result_temp = option_prem_iv_builder_III.build_premium_buckets(
-            #     raw_contracts = opt_contracts_data,
-            #     symbol        = symbol,
-            #     current_date  = option_date,
-            #     spot_price    = spot,
-            #     option_type   = 'put',
-            # )
-
-            put_result  = option_prem_iv_builder_V.build_premium_buckets(
+            put_result  = option_prem_iv_builder_VI.build_premium_buckets(
                 raw_contracts = opt_contracts_data,
                 symbol        = symbol,
                 current_date  = option_date,
                 spot_price    = spot,
-                option_type   = 'put',
+                option_type   = 'put',  
             )
             
-            call_result = option_prem_iv_builder_V.build_premium_buckets(
+            call_result = option_prem_iv_builder_VI.build_premium_buckets(
                 raw_contracts = opt_contracts_data,
                 symbol        = symbol,
                 current_date  = option_date,
@@ -221,7 +215,7 @@ def option_analysis_scan(ticker_list, api_key, option_date, as_of_date):
             hv_flat['relative_vol_spy'] = round(symbol_hv_30 / spy_hv_30, 2) if spy_hv_30 > 0 else None
             hv_flat['relative_vol_qqq'] = round(symbol_hv_30 / qqq_hv_30, 2) if qqq_hv_30 > 0 else None
 
-            ### Build Straddle and prem_units --------------------------
+            ### Build Straddle and Prem_Units --------------------------
             print("Building Straddle Data")
             actual_dtes = (
                 put_result['detail'][['dte_window', 'actual_dte']]
@@ -230,8 +224,8 @@ def option_analysis_scan(ticker_list, api_key, option_date, as_of_date):
                 .to_dict()
             )
             
-            straddle   = option_prem_iv_builder_V.compute_straddle_premium(put_result['summary'], call_result['summary'])
-            prem_units = option_prem_iv_builder_V.compute_premium_per_unit_iv(
+            straddle   = option_prem_iv_builder_VI.compute_straddle_premium(put_result['summary'], call_result['summary'])
+            prem_units = option_prem_iv_builder_VI.compute_premium_per_unit_iv(
                              straddle,
                              atm_iv_by_dte = hv_vol_outputs['atm_iv_by_dte'],
                              hv_30         = hv_vol_outputs['current_hv']['HV_30'],
@@ -239,23 +233,27 @@ def option_analysis_scan(ticker_list, api_key, option_date, as_of_date):
                          )
 
             ### Flatten Option Data w/ Straddle -------------------------------------------------------------
-            option_flat_premiums = option_prem_iv_builder_V.flatten_premium_summary(put_result, 
+            option_flat_premiums = option_prem_iv_builder_VI.flatten_premium_summary(put_result, 
                                                                     prem_units, symbol, option_date, spot)
 
+            hv_cols = ['symbol', 'HV_20', 'HV_30', 'HV_60', 'atm_iv_14', 'ratio_14',
+            'spread_14', 'signal_14', 'atm_iv_30', 'ratio_30', 'spread_30',
+            'signal_30', 'atm_iv_45', 'ratio_45', 'spread_45', 'signal_45',
+            'atm_iv_over60_1', 'ratio_over60_1', 'spread_over60_1',
+            'signal_over60_1', 'atm_iv_over60_2', 'ratio_over60_2',
+            'spread_over60_2', 'signal_over60_2', 'spike_count_30',
+            'spike_ratio_30', 'avg_spike_pct_30', 'max_spike_pct_30',
+            'spike_signal_30', 'spike_count_60', 'spike_ratio_60',
+            'avg_spike_pct_60', 'max_spike_pct_60', 'spike_signal_60',
+            'relative_vol_spy', 'relative_vol_qqq']
+
             ### Merge Option and Hist. Vol Data
-            single_symbol_option_analytics = option_flat_premiums.merge(right=hv_flat.loc[:,['symbol',
-                            'HV_20', 'HV_30', 'HV_60', 'atm_iv_14', 'ratio_14',
-                            'spread_14', 'signal_14', 'atm_iv_30', 'ratio_30', 'spread_30',
-                            'signal_30', 'atm_iv_over60_1', 'ratio_over60_1', 'spread_over60_1',
-                            'signal_over60_1', 'atm_iv_over60_2', 'ratio_over60_2',
-                            'spread_over60_2', 'signal_over60_2', 'spike_count_30',
-                            'spike_ratio_30', 'avg_spike_pct_30', 'max_spike_pct_30',
-                            'spike_signal_30', 'spike_count_60', 'spike_ratio_60',
-                            'avg_spike_pct_60', 'max_spike_pct_60', 'spike_signal_60',
-                            "relative_vol_spy", "relative_vol_qqq"]],
-                       how='left',
-                       left_on=['symbol'],
-                       right_on=['symbol'])
+            single_symbol_option_analytics = option_flat_premiums.merge(
+                right   = hv_flat.reindex(columns=hv_cols),  # NaN for missing, never crashes
+                how     = 'left',
+                left_on = ['symbol'],
+                right_on= ['symbol']
+                )
                     
             sym_analysis_comb.append(single_symbol_option_analytics)  ### Add cons. DF into hold log / list
             print("OK")
@@ -354,4 +352,4 @@ def audit_non_numeric(df, symbol_col='symbol', allowed_string_cols=allowed_strin
     print(f"\n⚠ Found {len(report)} missing or non-numeric values\n")
     return report
 
-
+### --> END

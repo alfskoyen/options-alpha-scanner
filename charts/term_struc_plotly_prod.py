@@ -74,36 +74,37 @@ MONO = "JetBrains Mono, Fira Mono, Consolas, monospace"
 METRICS = {
     "put_atm": {
         "label": "ATM Put Premium (%)",
-        "cols":  ["put_atm_14", "put_atm_30", "put_atm_over60_1", "put_atm_over60_2"],
+        "cols":  ["put_atm_14", "put_atm_30", 'put_atm_45', 
+        "put_atm_over60_1", "put_atm_over60_2"],
     },
     "premium_slight": {
         "label": "Slight OTM Premium (%)",
-        "cols":  ["premium_slight_14", "premium_slight_30",
+        "cols":  ["premium_slight_14", "premium_slight_30", 'premium_slight_45',
                   "premium_slight_over60_1", "premium_slight_over60_2"],
     },
     "premium_moderate": {
         "label": "Moderate OTM Premium (%)",
-        "cols":  ["premium_moderate_14", "premium_moderate_30",
+        "cols":  ["premium_moderate_14", "premium_moderate_30", 'premium_moderate_45',
                   "premium_moderate_over60_1", "premium_moderate_over60_2"],
     },
     "premium_far": {
         "label": "Far OTM Premium (%)",
-        "cols":  ["premium_far_14", "premium_far_30",
+        "cols":  ["premium_far_14", "premium_far_30", 'premium_far_45',
                   "premium_far_over60_1", "premium_far_over60_2"],
     },
     "atm_iv": {
         "label": "ATM Implied Volatility",
-        "cols":  ["atm_iv_14", "atm_iv_30", "atm_iv_over60_1", "atm_iv_over60_2"],
+        "cols":  ["atm_iv_14", "atm_iv_30", 'atm_iv_45',"atm_iv_over60_1", "atm_iv_over60_2"],
     },
     "ratio": {
         "label": "IV / HV Ratio",
-        "cols":  ["ratio_14", "ratio_30", "ratio_over60_1", "ratio_over60_2"],
+        "cols":  ["ratio_14", "ratio_30", 'ratio_45', "ratio_over60_1", "ratio_over60_2"],
     },
 }
 
 # DTE x-axis — approximate calendar days for even spacing
-DTE_X      = [14, 30, 63, 91]
-DTE_LABELS = ["14D", "30D", "60D+1", "60D+2"]
+DTE_X      = [14, 30, 45, 63, 91]
+DTE_LABELS = ["14D", "30D", "45D", "60D+1", "60D+2"]
 
 # HV lookback x-axis
 HV_X      = [20, 30, 60]
@@ -111,8 +112,8 @@ HV_LABELS = ["HV 20D", "HV 30D", "HV 60D"]
 HV_COLS   = ["HV_20", "HV_30", "HV_60"]
 
 # IV columns matched to approximate HV lookback windows
-IV_HV_MATCH_COLS   = ["atm_iv_14", "atm_iv_30", "atm_iv_over60_1"]
-IV_HV_MATCH_X      = [14, 30, 63]
+IV_HV_MATCH_COLS   = ["atm_iv_14", "atm_iv_30", "atm_iv_45", "atm_iv_over60_1"]
+IV_HV_MATCH_X      = [14, 30, 45, 63]
 
 
 # ── SHARED HELPERS ────────────────────────────────────────────────
@@ -270,7 +271,7 @@ def build_term_structure(
     height:          int  = 520,
 ) -> go.Figure:
     """
-    Term structure across 14D / 30D / 60D+1 / 60D+2.
+    Term structure across 14D / 30D / 45D / 60D+1 / 60D+2.
 
     metric: 'put_atm' | 'premium_slight' | 'premium_moderate' |
             'premium_far' | 'atm_iv' | 'ratio'
@@ -742,7 +743,7 @@ def show_term_structure_dashboard(df: pd.DataFrame):
                 )
             fig.show()
 
-	## -- Add feature to remove dropdown for views that do not require ->    
+    ## -- Add feature to remove dropdown for views that do not require ->    
     def toggle_metric(change):
         metric_dd.layout.display  = "flex" if change["new"] == "DTE Term Structure" else "none"
         show_iv_cb.layout.display = "flex" if change["new"] == "HV Term Structure"  else "none"

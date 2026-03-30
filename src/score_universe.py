@@ -45,10 +45,10 @@ STRIKE_WEIGHTS = {
 
 # Risk component weights
 RISK_WEIGHTS = {
-    'iv_hv_ratio': 0.2,
-    'hv_30':       0.25,
+    'iv_hv_ratio':    0.2,
+    'hv_30':          0.25,
     'spike_wt_score': 0.4,
-    'slope':       0.15,
+    'slope':          0.15,
 }
 
 # Term Structure weights — ATM anchored, small Slight contribution

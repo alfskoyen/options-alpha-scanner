@@ -27,8 +27,8 @@ DELTA_BUCKETS = {
 
 MIN_OI_BY_BUCKET = {
     'ATM':      0,    # vega-only — ATM is always the most liquid strike
-    'Slight':   0,    # some OI required
-    'Moderate': 3,    # meaningful OI needed
+    'Slight':   1,    # some OI required
+    'Moderate': 2,    # meaningful OI needed
     'Far':      5,   # far OTM needs real open interest to be tradeable
         }       
 

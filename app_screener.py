@@ -22,24 +22,23 @@ Data:
     See data.py and README.md for the full data pipeline description.
 """
 
-import os
 import dash
 import dash_bootstrap_components as dbc
 from dash import Input, Output, dcc, html
 
-from data_prep import load_data, prep_data, get_scan_meta
+from data import load_data, prep_data, get_scan_meta
 from theme import (
     BG, PANEL, BORDER, CROSS, TEXT_PRI, TEXT_SEC,
     ACCENT, Q_COLORS, Q_LABELS, MONO,
 )
 # from scatter_plotly        import build_scatter_global, build_scatter_quadrant
-from charts.scatter_plotly_prod import _scatter_global_view, _scatter_quadrant_top_n
-from charts.bar_plotly_prod           import build_bar
-from charts.histo_plotly_prod     import build_histogram
-from charts.term_struc_plotly_prod import (
+from charts.scatter_plotly import _scatter_global_view, _scatter_quadrant_top_n
+from charts.bar_plotly_II           import build_bar
+from charts.histo_plotly     import build_histogram
+from charts.term_struc_plotly_II import (
     build_term_structure, build_hv_term_structure, build_iv_hv_overlay,)
 # from table_plotly          import register_table_callbacks
-from charts.table_plotly_prod import register_table_callbacks, _build_datatable
+from charts.table_plotly import register_table_callbacks, _build_datatable
 
 # ── Bootstrap ─────────────────────────────────────────────────────
 df   = prep_data(load_data())
@@ -259,7 +258,7 @@ header = html.Div(
         html.Span("◈", style={"color": ACCENT, "fontSize": "22px"}),
         html.Div([
             html.Div(
-                "OPTIONS SCANNER: PUT ALPHA - model alf 1.0",
+                "OPTIONS SCANNER: PUT EXHANGE - model alf 1.0",
                 style={"fontFamily": MONO, "letterSpacing": "0.1em",
                        "color": TEXT_PRI, "fontWeight": "600", "fontSize": "18px"},
             ),
@@ -407,14 +406,15 @@ hist_tab = html.Div(style={"paddingTop": "16px"}, children=[
                     {"label": "Moderate Premium 30D",  "value": "premium_moderate_30"},
                     {"label": "Far Premium 14D",       "value": "premium_far_14"},
                     {"label": "Far Premium 30D",       "value": "premium_far_30"},
+                    {"label": "Straddle 14D",          "value": "straddle_14"},
                     {"label": "HV 20D",                "value": "HV_20"},
                     {"label": "HV 30D",                "value": "HV_30"},
                     {"label": "HV 60D",                "value": "HV_60"},
                     {"label": "IV/HV Ratio 14D",       "value": "ratio_14"},
                     {"label": "IV/HV Ratio 30D",       "value": "ratio_30"},
-                    {"label": "Spike Magnitude 60D",   "value": "avg_spike_pct_60"},
-                    {"label": "Spike Ratio 60D",       "value": "spike_ratio_60"},
-                    {"label": "Straddle 14D",          "value": "straddle_14"},
+                    {"label": "Relative Vol. Ratio to S&P 500",  "value": "relative_vol_spy"},
+                    {"label": "Avg. Spike Magnitude 60D",  "value": "avg_spike_pct_60"},
+                    {"label": "Blended Spike Score (Freq./Mag.)",       "value": "spike_score_universe"},
                     {"label": "Premium Score",         "value": "premium_score"},
                     {"label": "Risk Score",            "value": "risk_score"},
                 ],
@@ -742,10 +742,5 @@ register_table_callbacks(app, df)
 # ── Run ───────────────────────────────────────────────────────────
 # if __name__ == "__main__":
 #     app.run(debug=True, port=8050)
-# if __name__ == "__main__":
-#     app.run(debug=True, host='127.0.0.1', port=8050)
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8050))
-    app.run(debug=False, host="0.0.0.0", port=port)
-
-    
+    app.run(debug=True, host='127.0.0.1', port=8050)

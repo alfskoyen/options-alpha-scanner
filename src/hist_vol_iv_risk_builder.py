@@ -22,7 +22,7 @@ HV_WINDOWS  = [20, 30, 60]   ### lookback windows in trading days
                               # 30 is the primary (matches 30-DTE IV comparison)
                               # 20 and 60 give short and long context
 PRIMARY_HV  = 30
-DTE_WINDOWS = [14, 30, 'over60_1', 'over60_2']
+DTE_WINDOWS = [14, 30, 45, 'over60_1', 'over60_2']
 
 ### -- Step 1: Parse TIME_SERIES_DAILY response ---------------------------------
 def parse_daily_closes(av_response):
@@ -301,6 +301,19 @@ def build_hv_score(av_daily_response, bucket_summary, symbol, as_of_date=None):
         row['ratio_{}'.format(dte)]   = round(r['iv_hv_ratio'],  3)
         row['spread_{}'.format(dte)]  = round(r['iv_hv_spread'], 4)
         row['signal_{}'.format(dte)]  = r['interpretation']
+
+    # -- gap fill — ensure all DTE columns exist even if window was missing
+    expected_dtes = ['14', '30', 'over60_1', 'over60_2']
+    for dte in expected_dtes:
+        for col, default in [
+            ('atm_iv', np.nan),
+            ('ratio',  np.nan),
+            ('spread', np.nan),
+            ('signal', None  ),
+        ]:
+            col_name = '{}_{}'.format(col, dte)
+            if col_name not in row:
+                row[col_name] = default
 
     ### Spike data/columns — 30-day window
     spike_30 = hv_score_dict['spike_30']
