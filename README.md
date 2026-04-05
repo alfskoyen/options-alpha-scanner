@@ -6,9 +6,13 @@
   <p><em>Figure: Premium to Risk Spread Scatter-Plot of Global Universe of Put Options.</em></p> 
 </div> -->
 
-![Status](https://img.shields.io/badge/status-beta-orange)
-![Python](https://img.shields.io/badge/python-3.11-blue)
-![Data](https://img.shields.io/badge/data-Alpha%20Vantage-green)
+[![Status](https://img.shields.io/badge/status-beta-orange)](#)
+[![Python](https://img.shields.io/badge/python-3.11-blue)](https://www.python.org/)
+[![Data](https://img.shields.io/badge/data-Alpha%20Vantage-green)](https://www.alphavantage.co/)
+
+[![Plotly](https://img.shields.io/badge/Plotly-Visualization-3F4F75?logo=plotly&logoColor=white)](https://plotly.com/)
+[![Dash](https://img.shields.io/badge/Dash-App%20Framework-000000?logo=plotly&logoColor=white)](https://dash.plotly.com/)
+[![Render](https://img.shields.io/badge/Render-Deployment-46E3B7?logo=render&logoColor=black)](https://render.com/)
 
 > **Active development** — working pipeline scanning ~600 symbols. 
 > Scoring methodology and dashboard under continuous iteration.
