@@ -106,16 +106,28 @@ def compute_premium_score(df):
                 if col in df.columns and pd.notna(row.get(col)):
                     wp += row[col] * st_weight  ## weighed score is premium * strike weight
                     has_any_data  = True
-            
             if has_any_data:
                 active_dtes[dte] = (wp, dt_weight)
 
+        # -- minimum window check — skip if insufficient coverage -------------
+        ## If the number of tagged expiration dates across the DTE window is lower than Min, then remvoew. 
+        if len(active_dtes) < MIN_DTE_WINDOWS:
+            raw_scores[idx] = np.nan   # make raw_scores by DTE NAN if Min is not 3; will be dropped downstream
+            continue
+
         # rescale weights across available DTE windows only
-        if active_dtes:
-            total_weight = sum(w for _, w in active_dtes.values())
-            for dte, (wp, dt_weight) in active_dtes.items():
-                rescaled_weight  = dt_weight / total_weight
-                raw_scores[idx] += wp * rescaled_weight                 ## raw score is weighted strike * dte weight
+        total_weight = sum(w for _, w in active_dtes.values())
+        score        = 0.0
+        for dte, (wp, dt_weight) in active_dtes.items():
+            rescaled_weight = dt_weight / total_weight
+            score          += wp * rescaled_weight      ## raw score is weighted strike * dte weight
+        raw_scores[idx] = score
+
+        # if active_dtes:
+        #     total_weight = sum(w for _, w in active_dtes.values())
+        #     for dte, (wp, dt_weight) in active_dtes.items():
+        #         rescaled_weight  = dt_weight / total_weight
+        #         raw_scores[idx] += wp * rescaled_weight                 ## raw score is weighted strike * dte weight
 
     # -- efficiency composite (prem_per_iv_primary) ---------------------------
     eff = pd.Series(0.0, index=df.index)
@@ -129,25 +141,51 @@ def compute_premium_score(df):
             if col in df.columns and pd.notna(row.get(col)):
                 active_dtes[dte] = (row[col], dt_weight)  ## add to dict, the metric value and related weight.
 
-        if active_dtes:
-            total_weight = sum(w for _, w in active_dtes.values())  ## sum the second values / weights in dict
-            for dte, (val, dt_weight) in active_dtes.items():
-                rescaled_weight = dt_weight / total_weight    ## rescale proportionally, by dt_weight over total weight. If all weights present, same value. 
-                eff[idx]       += val * rescaled_weight
+        # minimum check
+        if len(active_dtes) < MIN_DTE_WINDOWS:
+            eff[idx] = np.nan
+            continue
 
-    # -- standardize each component -------------------------------------------
-    scaler = StandardScaler()
+        total_weight = sum(w for _, w in active_dtes.values())
+        score        = 0.0
+        for dte, (val, dt_weight) in active_dtes.items():
+            rescaled_weight = dt_weight / total_weight
+            score          += val * rescaled_weight
+        eff[idx] = score
 
-    raw_scaled = scaler.fit_transform(raw_scores.values.reshape(-1, 1)).flatten()
-    eff_scaled = scaler.fit_transform(eff.values.reshape(-1, 1)).flatten()
+        # if active_dtes:
+        #     total_weight = sum(w for _, w in active_dtes.values())  ## sum the second values / weights in dict
+        #     for dte, (val, dt_weight) in active_dtes.items():
+        #         rescaled_weight = dt_weight / total_weight    ## rescale proportionally, by dt_weight over total weight. If all weights present, same value. 
+        #         eff[idx]       += val * rescaled_weight
 
-    # -- combine --------------------------------------------------------------
-    combined = PREM_WEIGHTS.get('raw') * raw_scaled + PREM_WEIGHTS.get('eff') * eff_scaled  ## calc. combined score with prem scoring weights
+    # -- drop symbols with insufficient DTE coverage --------------------------
+    valid_mask = raw_scores.notna() & eff.notna()
+    n_dropped  = (~valid_mask).sum()
+    if n_dropped > 0:
+        dropped_symbols = df.loc[~valid_mask, 'symbol'].tolist()
+        print(f"  Dropped {n_dropped} symbols — insufficient DTE coverage (<{MIN_DTE_WINDOWS} windows): {dropped_symbols}")
 
-    # -- standardize final combined score -------------------------------------
-    final = scaler.fit_transform(pd.Series(combined).values.reshape(-1, 1)).flatten()
+    # -- standardize on valid rows only ---------------------------------------
+    scaler     = StandardScaler()
+    final      = pd.Series(np.nan, index=df.index)
 
-    return pd.Series(final, index=df.index).round(4)
+    if valid_mask.sum() > 1:
+        raw_valid  = raw_scores[valid_mask].values.reshape(-1, 1)
+        eff_valid  = eff[valid_mask].values.reshape(-1, 1)
+
+        raw_scaled = scaler.fit_transform(raw_valid).flatten()
+        eff_scaled = scaler.fit_transform(eff_valid).flatten()
+
+        combined   = (PREM_WEIGHTS.get('raw') * raw_scaled +
+                      PREM_WEIGHTS.get('eff') * eff_scaled)
+        final_vals = scaler.fit_transform(
+                         pd.Series(combined).values.reshape(-1, 1)
+                     ).flatten()
+
+        final[valid_mask] = final_vals
+
+    return final.round(4)
 
 
 ### ------------------------------------------------------------------

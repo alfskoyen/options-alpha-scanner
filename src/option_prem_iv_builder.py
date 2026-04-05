@@ -1,9 +1,11 @@
 
 """
-Python file to pull in API Option Data for a Symbol 'X' and output a DataFrame of 
-sadfdsaf
-asdfdsa
-
+Python file to pull in API Option Data for a Symbol 'X' and 
+create an output DataFrame holding:  
+a) for each symbol, date, spot price, expiration related to the the DTE bucket, 
+b) for each DTE bucket; the premium and implied volatility (iv) at various delta buckets,
+c) straddle premium for each symbol by DTE, 
+d) efficiency premium metrics including; premium per iv by DTE, secondary premium per iv and premium per HV-30Day at 14D DTE. 
 """
 
 import pandas as pd
@@ -14,9 +16,10 @@ from datetime import datetime, timedelta
 #     # test code here
 
 ### Hard Coded Parameters ------------------------------------------------------
-DTE_WINDOWS   = [14, 30, 'over60_1', 'over60_2']        ## target expirations in days
-DTE_TOLERANCE = 13                                      ## ± days to accept around each target
+DTE_WINDOWS   = [14, 30, 45, 'over60_1', 'over60_2']    ## target expirations in days
 OVER60_MIN    = 60                                      ## minimum days out for the dynamic long-dated window
+OVER60_MAX    = 87                                      ## maximum days out for over60_1 — if first expiry beyond this, skip to over60_2
+
 
 DELTA_BUCKETS = {
     'ATM':      (0.40, 0.60),   # ~50% probability ITM
@@ -25,16 +28,23 @@ DELTA_BUCKETS = {
     'Far':      (0.05, 0.15),   # ~5-15% probability
 }
 
-MIN_OI_BY_BUCKET = {
+MIN_OI_BY_BUCKET = {  ## filter illiquid contracts
     'ATM':      0,    # vega-only — ATM is always the most liquid strike
     'Slight':   1,    # some OI required
-    'Moderate': 2,    # meaningful OI needed
-    'Far':      5,   # far OTM needs real open interest to be tradeable
+    'Moderate': 3,    # meaningful OI needed
+    'Far':      5,    # far OTM needs real open interest to be tradeable
         }       
 
 # MIN_OPEN_INTEREST = 2                # filter illiquid contracts
 MIN_VEGA          = 0.001              # filter contracts with no vol sensitivity
 
+TOLERANCE_BY_WINDOW = {    ## ± days to accept around each target
+        14:         12,    # keep as-is — NaN if no weekly nearby
+        30:         12,
+        45:         12,
+        'over60_1': 999,
+        'over60_2': 999,
+    }
 
 ### --- Step 1 Parse & clean raw contracts -----------------
 def parse_contracts(raw: list[dict]):
@@ -61,7 +71,30 @@ def parse_contracts(raw: list[dict]):
     return df
 
 
- ### --- Step 2 - Identify the appropriate Days to Expiration (DTE) Date 
+### --- Step 2 - Identify the DTE Dates in the Options Data Population -> Days to Expiration (DTE) Date 
+""" This section determines which expirations captured from the Options API call fall into a consistent categorization, with;
+ a) 14day -> snap determination of the 14-day out expriation, essentially the following or next Friday, 
+ b) 30day -> the next month out / 30-day expiration; with a 
+"""
+
+## Helpers ----------------------------------------------------------------
+
+def is_standard_expiration(date): 
+    """ Helper: takes a date and determines boolean, is it a standard 3rd Friday;
+    3rd Friday of the month — most liquid, highest OI. """
+    
+    d = pd.Timestamp(date)
+
+    # 3rd Friday — standard case
+    if d.weekday() == 4 and 15 <= d.day <= 21:   ## return boolean, is the day, both a Friday (4) and the DOM is between 15 and 21. 
+        return True
+
+    # Thursday before 3rd Friday — holiday-shifted expiration
+    if d.weekday() == 3 and 14 <= d.day <= 20:
+        return True
+
+    return False
+
 def get_target_friday_14d(current_date: datetime) -> datetime:
     """
     Weekday-aware target for the 14-day window. Options expire on Fridays, so we snap to the appropriate Friday:
@@ -69,71 +102,171 @@ def get_target_friday_14d(current_date: datetime) -> datetime:
       Thu / Fri        →  Friday of the week AFTER next  (~8–15 days out)
       weekday() returns: Mon=0, Tue=1, Wed=2, Thu=3, Fri=4, Sat=5, Sun=6
     """
-    dow = current_date.weekday()
+    dow = current_date.weekday()  ## turns as of date into an integer day of the week;
 
-    if dow <= 2:   # Mon/Tue/Wed → next Friday
-        days_until_friday = (4 - dow) + 7   # skip THIS week's Friday, go to next
+    if dow <= 2:   # Mon/Tue/Wed → snap to next Friday
+        days_until_friday = (4 - dow) + 7   # select the Friday of next week. 
     else:   # Thu/Fri → the Friday after next
-        days_until_friday = (4 - dow) + 14
+        days_until_friday = (4 - dow) + 14  # select two Friday's out.
 
     return current_date + timedelta(days=days_until_friday)
 
-def get_over60_expirations(unique_expirations, current_date, min_dte=OVER60_MIN, count=2):
+def get_over60_expirations(unique_expirations, current_date, min_dte=OVER60_MIN, max_dte_1=OVER60_MAX, count=2):
     """
     Return the next `count` expirations beyond min_dte days. Naturally lands on standard monthly / LEAPS expirations
     (e.g. May 15, June 18) without hardcoding dates.
+
+    Return the next `count` expirations beyond min_dte days.
+
+    over60_1 is capped at max_dte_1 days — if the first available expiration
+    beyond 60 days is further than 80 days out, it means the chain is sparse
+    and that window is not representative. In that case over60_1 = None and
+    over60_2 takes the next available expiration.
     """
+
     cutoff = pd.Timestamp(current_date + timedelta(days=min_dte))
-    future = [exp for exp in unique_expirations if exp > cutoff]
-    return future[:count]
+    future = [exp for exp in unique_expirations if exp > cutoff and is_standard_expiration(exp)]
 
+    if not future:
+        return [None, None]
 
-def find_target_expirations(df: pd.DataFrame,
-                         current_date: datetime,
-                         dte_windows: list[int] = DTE_WINDOWS,
-                         tolerance: int = DTE_TOLERANCE) -> dict[int, datetime]:
-    """  For each DTE window, find the actual expiration date in the chain.
+    result = []  ## returns a list of two dates.
 
-      14        : weekday-aware Friday snapping
-      30, 45    : mechanical offset, nearest chain expiry within tolerance
-      over60_1  : first standard expiration beyond 60 days  (e.g. May 15)
-      over60_2  : second standard expiration beyond 60 days (e.g. June 18)
-    """
-    
-    unique_expirations = sorted(df['expiration'].unique())
+    # over60_1 — only valid if within max_dte_1 days
+    first     = future[0]
+    first_dte = (first - pd.Timestamp(current_date)).days
+
+    if first_dte <= max_dte_1:
+        result.append(first)           # valid — within 80 days
+        remaining = future[1:]         # over60_2 draws from next
+    else:
+        result.append(None)            # too far — skip over60_1
+        remaining = future             # over60_2 gets the first available
+
+    # over60_2 — next available after over60_1
+    result.append(remaining[0] if remaining else None)
+
+    return result
+
+## -- Main Expiration Identification
+def find_target_expirations(df, current_date, dte_windows=DTE_WINDOWS, dte_tolerance=TOLERANCE_BY_WINDOW):
+
+    if dte_windows is None:
+        dte_windows = DTE_WINDOWS
+
+    unique_expirations = sorted(df['expiration'].unique())  ## from Parsed Data, create list [] of unique expirations from API call.
     result = {}
 
-    ### Call method to resolve the two long-dated windows up front -> 
-    over60_dates = get_over60_expirations(unique_expirations, current_date)
+    ## resolve over60 windows first
+    over60_dates       = get_over60_expirations(unique_expirations, current_date)
     result['over60_1'] = over60_dates[0] if len(over60_dates) >= 1 else None
     result['over60_2'] = over60_dates[1] if len(over60_dates) >= 2 else None
 
-    for target_dte in dte_windows:
-
+    for target_dte in dte_windows:  ## Loop through set DTE windows:
         if target_dte in ('over60_1', 'over60_2'):
-            continue  # already resolved above
-        elif target_dte == 14:
+            continue
+
+        if target_dte == 14:
             target_date = get_target_friday_14d(current_date)
         else:
-            target_date = current_date + timedelta(days=target_dte)
+            target_date = current_date + timedelta(days=target_dte)  ## calculate the as-of-date + dte period (e.g. 30)
+
+        tolerance = TOLERANCE_BY_WINDOW.get(target_dte, 13)
+        target_ts = pd.Timestamp(target_date)
 
         candidates = [
-            exp for exp in unique_expirations
-            if abs((exp - pd.Timestamp(target_date)).days) <= tolerance
+            e for e in unique_expirations     ## going through each unique expriation date, if the date hits the tolerance, select:
+            if abs((e - target_ts).days) <= tolerance
         ]
 
-        # if target_dte != 14:   ### Added to see that the correct Target DTE and Candidate dates were showing
-        #     print(target_dte)
-        #     print(pd.Timestamp(target_date))
-        #     print(candidates)
+        if not candidates:
+            result[target_dte] = None
+            continue
 
-        if candidates:
-            best = min(candidates, key=lambda e: abs((e - pd.Timestamp(target_date)).days))
-            result[target_dte] = best
+        if target_dte == 14:
+            # 14-day — keep existing behavior, just pick closest
+            result[target_dte] = min(
+                candidates,
+                key=lambda e: abs((e - target_ts).days)
+            )
         else:
-            result[target_dte] = None  # no expiration found near this window
+            # 30 and 45 — prefer standard monthly (3rd Friday) if one exists
+            # within candidates, otherwise fall back to closest
+            standard = [e for e in candidates if is_standard_expiration(e)]
+            if standard:
+                result[target_dte] = min(
+                    standard,
+                    key=lambda e: abs((e - target_ts).days)
+                )
+            else:
+                result[target_dte] = min(
+                    candidates,
+                    key=lambda e: abs((e - target_ts).days)
+                )
 
     return result
+
+
+# Behavior by symbol type:
+# ```
+# KLAC (monthly only, option_date = 3/25/26):
+#   14-day → April 2 target, no expiry within ±13 → None  (sparse, expected)
+#   30-day → April 24 target, April 17 within ±13, is standard → April 17 ✓
+#   45-day → May 9 target, May 15 within ±13, is standard → May 15 ✓
+
+# AAPL (weekly):
+#   14-day → April 3 target, April 2 within ±13 → April 2 ✓ (weekly, closest)
+#   30-day → April 24 target, April 17 + April 24 in candidates,
+#            April 17 is standard monthly → April 17 ✓
+#   45-day → May 9 target, May 15 within ±13, is standard → May 15 ✓
+
+
+# def find_target_expirations(df: pd.DataFrame,
+#                          current_date: datetime,
+#                          dte_windows: list[int] = DTE_WINDOWS,
+#                          tolerance: int = DTE_TOLERANCE) -> dict[int, datetime]:
+#     """  For each DTE window, find the actual expiration date in the chain.
+
+#       14        : weekday-aware Friday snapping
+#       30, 45    : mechanical offset, nearest chain expiry within tolerance
+#       over60_1  : first standard expiration beyond 60 days  (e.g. May 15)
+#       over60_2  : second standard expiration beyond 60 days (e.g. June 18)
+#     """
+    
+#     unique_expirations = sorted(df['expiration'].unique())
+#     result = {}
+
+#     ### Call method to resolve the two long-dated windows up front -> 
+#     over60_dates = get_over60_expirations(unique_expirations, current_date)
+#     result['over60_1'] = over60_dates[0] if len(over60_dates) >= 1 else None
+#     result['over60_2'] = over60_dates[1] if len(over60_dates) >= 2 else None
+
+#     for target_dte in dte_windows:
+
+#         if target_dte in ('over60_1', 'over60_2'):
+#             continue  # already resolved above
+#         elif target_dte == 14:
+#             target_date = get_target_friday_14d(current_date)
+#         else:
+#             target_date = current_date + timedelta(days=target_dte)
+
+#         candidates = [
+#             exp for exp in unique_expirations
+#             if abs((exp - pd.Timestamp(target_date)).days) <= tolerance
+#         ]
+
+#         # if target_dte != 14:   ### Added to see that the correct Target DTE and Candidate dates were showing
+#         #     print(target_dte)
+#         #     print(pd.Timestamp(target_date))
+#         #     print(candidates)
+
+#         if candidates:
+#             best = min(candidates, key=lambda e: abs((e - pd.Timestamp(target_date)).days))
+#             result[target_dte] = best
+#         else:
+#             result[target_dte] = None  # no expiration found near this window
+
+#     return result
 
 
 ### --- Step 3: Filter to liquid, meaningful contracts ----------
@@ -198,7 +331,7 @@ def compute_normalized_premium(df: pd.DataFrame, spot: float) -> pd.DataFrame:
     return df
 
 
-### --- Step 5: Assign Strike Distance buckets ────────────────
+### --- Step 5: Assign Delta / OTM Distance Buckets -------------------------
 def assign_buckets(df: pd.DataFrame,
                    buckets: dict = DELTA_BUCKETS) -> pd.DataFrame:
     """
@@ -232,7 +365,7 @@ def assign_buckets(df: pd.DataFrame,
     return df
 
 
-### --- Step 6: Aggregate to one row per strike bucket per DTE ──────────────────────────
+### --- Step 6: Aggregate to one row per delta/OTM bucket per DTE -------------------------
 def aggregate_buckets(df: pd.DataFrame) -> pd.DataFrame:
     """
     For each (dte_window, bucket) group, compute summary stats:
@@ -305,7 +438,7 @@ def flatten_premium_summary(put_result, prem_unit_df, symbol, current_date, spot
     bucket_order = ['ATM', 'Slight', 'Moderate', 'Far']
     summary_df   = put_result['summary']
 
-    # premium + IV — grouped by DTE, ordered buckets, expiration header per block
+    ## premium + IV — grouped by DTE, ordered buckets, expiration header per block
     for dte_window, dte_group in summary_df.groupby('dte_window', sort=False):
         dte = str(dte_window)
 
@@ -321,7 +454,7 @@ def flatten_premium_summary(put_result, prem_unit_df, symbol, current_date, spot
             row[f'premium_{b}_{dte}'] = round(r['avg_premium_pct'] * 100, 4)
             row[f'iv_{b}_{dte}']      = round(r['avg_iv'] * 100, 4)
 
-    # straddle and per-unit metrics — one value per DTE, appended after premium block
+    ## straddle and per-unit metrics — one value per DTE, appended after premium block
     for _, r in prem_unit_df.iterrows():
         dte = str(r['dte_window'])
         row[f'straddle_{dte}']            = round(r['straddle_pct'] * 100,    4)
@@ -331,92 +464,24 @@ def flatten_premium_summary(put_result, prem_unit_df, symbol, current_date, spot
         row[f'prem_per_iv_sec_{dte}']     = r['prem_per_iv_secondary']
         row[f'prem_per_hv30_{dte}']       = r['prem_per_hv30']
 
+    ## -- gap fill — ensure all expected DTE columns exist even if window was missing
+    expected_dtes = list(map(str, DTE_WINDOWS))
+    for dte in expected_dtes:
+        for col in ['premium_atm', 'premium_slight', 'premium_moderate', 'premium_far',
+                    'iv_atm', 'iv_slight', 'iv_moderate', 'iv_far',
+                    'straddle', 'put_atm', 'call_atm',
+                    'prem_per_iv_primary', 'prem_per_iv_sec', 'prem_per_hv30']:
+            col_name = '{}_{}'.format(col, dte)
+            if col_name not in row:
+                row[col_name] = np.nan
+
+        # expiration col gets None not NaN since it's a date string
+        exp_col = 'expiration_{}'.format(dte)
+        if exp_col not in row:
+            row[exp_col] = None
+
     return pd.DataFrame([row])
 
-
-### --- Master function -----------------------------------------------------------
-def build_premium_buckets(raw_contracts: list[dict],
-                       symbol: str,
-                       current_date: str,
-                       spot_price: float,
-                       # option_type: str = 'put') -> dict:
-                       option_type: str ) -> dict:
-    """
-    Master pipeline. 
-
-    Args:
-        raw_contracts : list of dicts straight from Alpha Vantage API
-        symbol        : e.g. 'AAPL'
-        current_date  : 'YYYY-MM-DD'
-        spot_price    : current stock price (you pass this in — pull from AV quote)
-        option_type   : 'put' or 'call'
-
-    Returns:
-        {
-          'symbol': 'AAPL',
-          'date': '2026-02-25',
-          'spot': 244.00,
-          'option_type': 'put',
-          'target_expirations': { 14: <date>, 30: <date>, 45: <date> },
-          'summary': DataFrame — one row per (dte_window, bucket),
-          'detail':  DataFrame — every filtered contract with derived columns
-        }
-    """
-    today = datetime.strptime(current_date, '%Y-%m-%d')
-
-    # 1. parse
-    df = parse_contracts(raw_contracts)
-
-    # 2. find target expirations | DF of data
-    target_exps = find_target_expirations(df, today)
-
-    # 3. filter to relevant expirations only, tag with dte_window
-    frames = []
-    for dte_window, exp_date in target_exps.items():
-        if exp_date is None:
-            print(f"  ⚠️  No expiration found near {dte_window} DTE for {symbol}")
-            continue
-        subset = df[df['expiration'] == exp_date].copy()
-        subset['dte_window'] = dte_window
-        subset['expiration'] = exp_date
-        subset['actual_dte'] = (exp_date - pd.Timestamp(today)).days
-        frames.append(subset)
-
-    if not frames:
-        raise ValueError(f"No usable expirations found for {symbol} on {current_date}")
-
-    combined = pd.concat(frames, ignore_index=True)
-
-    # 4. filter for liquidity / vega
-    filtered = filter_contracts(combined, option_type=option_type)
-
-    # 5. normalized premium
-    with_premium = compute_normalized_premium(filtered, spot=spot_price)
-
-    # 6. bucket by strike price
-    bucketed = assign_buckets(with_premium)
-
-    # 7. aggregate
-    summary = aggregate_buckets(bucketed)
-
-    # add symbol metadata
-    summary.insert(0, 'symbol', symbol)
-    summary.insert(1, 'date', current_date)
-    summary.insert(2, 'spot', spot_price)
-
-    ### Add flat summary
-    flat_summary = flatten_premium(summary, symbol, current_date, spot_price)
-
-    return {
-        'symbol':             symbol,
-        'date':               current_date,
-        'spot':               spot_price,
-        'option_type':        option_type,
-        'target_expirations': target_exps,  ### Step 2 DataFrame Output
-        'summary':            summary,      ### Step 7 DataFrame Output
-        'detail':             bucketed,     ### Step 6 DF Output
-        'flat_summary' : flat_summary       ### Offering a flat summary
-    }
 
 ### --- Step 8 - Routine to take Call/Put data to build Straddle. 
 def compute_straddle_premium(put_summary, call_summary):
@@ -521,4 +586,89 @@ def compute_premium_per_unit_iv(straddle_df, atm_iv_by_dte, hv_30, actual_dtes=N
         })
 
     return pd.DataFrame(records)
+
+### -------------------------------------------------------------------------------
+### --- Master function -----------------------------------------------------------
+def build_premium_buckets(raw_contracts: list[dict],
+                       symbol: str,
+                       current_date: str,
+                       spot_price: float,
+                       # option_type: str = 'put') -> dict:
+                       option_type: str ) -> dict:
+    """
+    Master pipeline. 
+
+    Args:
+        raw_contracts : list of dicts straight from Alpha Vantage API
+        symbol        : e.g. 'AAPL'
+        current_date  : 'YYYY-MM-DD'
+        spot_price    : current stock price (you pass this in — pull from AV quote)
+        option_type   : 'put' or 'call'
+
+    Returns:
+        {
+          'symbol': 'AAPL',
+          'date': '2026-02-25',
+          'spot': 244.00,
+          'option_type': 'put',
+          'target_expirations': { 14: <date>, 30: <date>, 45: <date> },
+          'summary': DataFrame — one row per (dte_window, bucket),
+          'detail':  DataFrame — every filtered contract with derived columns
+        }
+    """
+    today = datetime.strptime(current_date, '%Y-%m-%d')
+
+    # 1. parse
+    df = parse_contracts(raw_contracts)
+
+    # 2. find target expirations | DF of data
+    target_exps = find_target_expirations(df, today, TOLERANCE_BY_WINDOW)
+
+    # 3. filter to relevant expirations only, tag with dte_window
+    frames = []
+    for dte_window, exp_date in target_exps.items():
+        if exp_date is None:
+            print(f"  ⚠️ No expiration found near {dte_window} DTE for {symbol}")
+            continue
+        subset = df[df['expiration'] == exp_date].copy()
+        subset['dte_window'] = dte_window
+        subset['expiration'] = exp_date
+        subset['actual_dte'] = (exp_date - pd.Timestamp(today)).days
+        frames.append(subset)
+
+    if not frames:
+        raise ValueError(f"No usable expirations found for {symbol} on {current_date}")
+
+    combined = pd.concat(frames, ignore_index=True)
+
+    # 4. filter for liquidity / vega
+    filtered = filter_contracts(combined, option_type=option_type)
+
+    # 5. normalized premium
+    with_premium = compute_normalized_premium(filtered, spot=spot_price)
+
+    # 6. bucket by strike price
+    bucketed = assign_buckets(with_premium)
+
+    # 7. aggregate
+    summary = aggregate_buckets(bucketed)
+
+    # add symbol metadata
+    summary.insert(0, 'symbol', symbol)
+    summary.insert(1, 'date', current_date)
+    summary.insert(2, 'spot', spot_price)
+
+    ### Add flat summary
+    flat_summary = flatten_premium(summary, symbol, current_date, spot_price)
+
+    return {
+        'symbol':             symbol,
+        'date':               current_date,
+        'spot':               spot_price,
+        'option_type':        option_type,
+        'target_expirations': target_exps,  ### Step 2 DataFrame Output
+        'summary':            summary,      ### Step 7 DataFrame Output
+        'detail':             bucketed,     ### Step 6 DF Output
+        'flat_summary':       flat_summary  ### Offering a flat summary
+    }
 
