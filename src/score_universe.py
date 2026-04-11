@@ -37,6 +37,8 @@ DTE_WEIGHTS = {
     'over60_2': 0.05,
 }
 
+MIN_DTE_WINDOWS = 3   # minimum windows required to compute a valid score
+
 STRIKE_WEIGHTS = {
     'atm':      0.20,
     'slight':   0.40,
@@ -91,11 +93,11 @@ def compute_premium_score(df):
     buckets  = list(STRIKE_WEIGHTS.keys())
 
     # -- raw premium composite ------------------------------------------------
-    raw_scores = pd.Series(0.0, index=df.index)
+    raw_scores = pd.Series(0.0, index=df.index)  ## create 0 value scalar series to hold created metrics 
 
     for idx in df.index:
         row          = df.loc[idx]
-        active_dtes  = {}   # dte -> (weighted_premium, dt_weight)
+        active_dtes  = {}   # holder for dte -> (weighted_premium, dt_weight)
 
         for dte, dt_weight in DTE_WEIGHTS.items():
             wp           = 0.0
@@ -103,7 +105,7 @@ def compute_premium_score(df):
 
             for strike_bucket, st_weight in STRIKE_WEIGHTS.items():
                 col = 'premium_{}_{}'.format(strike_bucket, dte)  ## create prem. column per delta-strike / dte buckets
-                if col in df.columns and pd.notna(row.get(col)):
+                if col in df.columns and pd.notna(row.get(col)):  ## if the created col is present and not NA
                     wp += row[col] * st_weight  ## weighed score is premium * strike weight
                     has_any_data  = True
             if has_any_data:
@@ -376,6 +378,14 @@ def score_universe(master_df):
 
     df['premium_score'] = compute_premium_score(df)
     df['risk_score']    = compute_risk_score(df)
+
+    # drop symbols that didn't meet minimum DTE coverage
+    before = len(df)
+    df     = df.dropna(subset=['premium_score', 'risk_score']).reset_index(drop=True)
+    after  = len(df)
+    if before - after > 0:
+        print(f"  Removed {before - after} symbols with insufficient data from scored universe")
+
     df['quadrant']      = assign_quadrant(df['premium_score'], df['risk_score'])
 
     # -- Call Term Structure ------------------------------------------------------- 
