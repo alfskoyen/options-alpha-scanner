@@ -17,6 +17,7 @@
 > **Active development** — working pipeline scanning ~600 symbols. 
 > Scoring methodology and dashboard under continuous iteration.
 > **Recent Improvements:**
+> - **Minimum DTE Window Monitoring** -  Removal of equity symbols if the metrics across the 5 DTE slots do not populate above the Min parameter value (e.g., requried DTE slots >= 3). This removes scarcely populated symbols from the analysis in cases of missign expriation dates.
 > - **45-day DTE window added** — improves term structure coverage for monthly-only
 >   chains (e.g. KLAC, MCHP) where 14-day and 30-day windows may find no liquid expiration
 > - **Weight rescaling in scoring** — when a DTE window is absent for a symbol, its
