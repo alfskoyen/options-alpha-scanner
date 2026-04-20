@@ -390,7 +390,15 @@ def aggregate_buckets(df: pd.DataFrame) -> pd.DataFrame:
     agg['avg_otm_distance_display'] = (agg['avg_otm_distance'] * 100).round(1)
  
     return agg
- 
+
+### --- Helper ---------------------------------------------------------------------------
+def fmt_dte(dte):
+    """Convert dte_window to clean string key — handles both numeric and named windows."""
+    try:
+        return str(int(float(dte)))   # 45.0 → '45', 14 → '14'
+    except (ValueError, TypeError):
+        return str(dte)               # 'over60_1' → 'over60_1'
+
 
 ### --- Step 7: Two Flatten Methods - Premium and StraddleData from Strike Buckets to Single Row
 def flatten_premium(summary_df, symbol, current_date, spot_price:None):
@@ -454,9 +462,10 @@ def flatten_premium_summary(put_result, prem_unit_df, symbol, current_date, spot
             row[f'premium_{b}_{dte}'] = round(r['avg_premium_pct'] * 100, 4)
             row[f'iv_{b}_{dte}']      = round(r['avg_iv'] * 100, 4)
 
-    ## straddle and per-unit metrics — one value per DTE, appended after premium block
+    ## -- straddle and per-unit metrics — one value per DTE, appended after premium block
     for _, r in prem_unit_df.iterrows():
-        dte = str(r['dte_window'])
+        dte = fmt_dte(r['dte_window'])    # safe for both 45.0 and 'over60_1'
+        # dte = str(int(r['dte_window']))     # 45.0 → 45 → '45'  not '45.0'
         row[f'straddle_{dte}']            = round(r['straddle_pct'] * 100,    4)
         row[f'put_atm_{dte}']             = round(r['put_atm_pct'] * 100,     4)
         row[f'call_atm_{dte}']            = round(r['call_atm_pct'] * 100,    4)
