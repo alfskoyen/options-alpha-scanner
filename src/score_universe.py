@@ -40,9 +40,9 @@ DTE_WEIGHTS = {
 MIN_DTE_WINDOWS = 3   # minimum windows required to compute a valid score
 
 STRIKE_WEIGHTS = {
-    'atm':      0.20,
-    'slight':   0.40,
-    'moderate': 0.30,
+    'atm':      0.15,
+    'slight':   0.30,
+    'moderate': 0.40,
     'far':      0.15,
 }
 
