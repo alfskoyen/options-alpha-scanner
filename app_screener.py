@@ -22,6 +22,13 @@ Data:
     See data.py and README.md for the full data pipeline description.
 """
 
+import os
+import pandas as pd
+import glob
+import threading
+from watchdog.observers import Observer
+from watchdog.events   import FileSystemEventHandler
+
 import dash
 import dash_bootstrap_components as dbc
 from dash import Input, Output, dcc, html
@@ -39,9 +46,53 @@ from charts.term_struc_plotly_prod import (
     build_term_structure, build_hv_term_structure, build_iv_hv_overlay,)
 from charts.table_plotly_prod import register_table_callbacks, _build_datatable
 
+
+
+# -- Data reload helper -------------------------------------------------------
+
+def load_latest_csv(data_dir='data'):
+    """Load the most recently modified options score CSV from the data folder."""
+    files = glob.glob(os.path.join(data_dir, 'option_scores_master_*.csv'))
+    if not files:
+        print("No data files found in {}".format(data_dir))
+        return pd.DataFrame()
+    latest = max(files, key=os.path.getmtime)
+    print("Loading: {}".format(os.path.basename(latest)))
+    return pd.read_csv(latest)
+
+
+# -- File watcher -------------------------------------------------------------
+
+class DataFileHandler(FileSystemEventHandler):
+    """Watches the data folder and reloads when a new CSV appears."""
+
+    def __init__(self, reload_fn):
+        self.reload_fn = reload_fn
+
+    def on_created(self, event):
+        if not event.is_directory and event.src_path.endswith('.csv'):
+            print("New file detected: {}".format(os.path.basename(event.src_path)))
+            self.reload_fn()
+
+    def on_modified(self, event):
+        if not event.is_directory and event.src_path.endswith('.csv'):
+            print("File modified: {}".format(os.path.basename(event.src_path)))
+            self.reload_fn()
+
+def start_watcher(data_dir='data', reload_fn=None):
+    """Start the file watcher in a background thread."""
+    handler  = DataFileHandler(reload_fn=reload_fn)
+    observer = Observer()
+    observer.schedule(handler, path=data_dir, recursive=False)
+    observer.daemon = True   # dies when main process exits
+    observer.start()
+    print("Watching {} for new data files...".format(data_dir))
+    return observer
+
+
 # ── Bootstrap ─────────────────────────────────────────────────────
-df   = prep_data(load_data())
-meta = get_scan_meta(df)
+# df   = prep_data(load_data())
+# meta = get_scan_meta(df)
 
 app = dash.Dash(
     __name__,
@@ -54,6 +105,30 @@ app = dash.Dash(
 )
 
 server = app.server   # Gunicorn entry point for Render / Heroku
+
+
+# app data state — use dict so watcher can mutate it
+app_data = {}
+
+def reload_data():
+    app_data['df']   = prep_data(load_data())
+    app_data['meta'] = get_scan_meta(app_data['df'])
+    print("Data reloaded — {} symbols".format(len(app_data['df'])))
+
+# initial load
+reload_data()
+
+# start watcher — auto-reloads when new CSV dropped in data/
+observer = start_watcher(data_dir='data', reload_fn=reload_data)
+
+# convenience references for existing code
+df   = app_data['df']
+meta = app_data['meta']
+
+# app = dash.Dash(
+#     __name__,
+#     ...
+# )
 
 # ── Global CSS ────────────────────────────────────────────────────
 app.index_string = """
@@ -627,6 +702,7 @@ app.layout = html.Div(
     Input("scatter-top-n",  "value"),
 )
 def update_scatter(view, top_n):
+    df = app_data['df']   # always fresh — picks up reloaded data
     if view == "global":
         return _scatter_global_view(df, top_n=top_n)
     return _scatter_quadrant_top_n(df, top_n=top_n)
@@ -638,6 +714,7 @@ def update_scatter(view, top_n):
     Input("bar-top-n",  "value"),
 )
 def update_bar(preset, top_n):
+    df = app_data['df']   # always fresh — picks up reloaded data
     configs = {
         "premium_score":         ("premium_score",          False, None),
         "premium_slight_14":     ("premium_slight_14",      False, None),
@@ -687,6 +764,7 @@ def update_bar(preset, top_n):
     Input("hist-overlays",  "value"),
 )
 def update_hist(metric, view, bins, overlays):
+    df = app_data['df']   # always fresh — picks up reloaded data
     overlays = overlays or []
     return build_histogram(
         df, metric=metric, view=view, bins=bins or 25,
@@ -705,6 +783,7 @@ def update_hist(metric, view, bins, overlays):
     Input("term-options",         "value"),
 )
 def update_term(view, metric, quadrant, options):
+    df = app_data['df']   # always fresh — picks up reloaded data
     options      = options or []
     metric_style = (
         {"display": "none"}  if view in ("hv", "iv_hv")
@@ -735,7 +814,8 @@ def update_term(view, metric, quadrant, options):
 
 
 # Table callbacks registered from charts/table.py
-register_table_callbacks(app, df)
+# register_table_callbacks(app, df) 
+register_table_callbacks(app, app_data) 
 
 
 # ── Run ───────────────────────────────────────────────────────────

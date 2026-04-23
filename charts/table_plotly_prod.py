@@ -492,7 +492,8 @@ def _build_datatable(data: list = None, df_for_styles: pd.DataFrame = None):
 
 
 # ── CALLBACKS ─────────────────────────────────────────────────────
-def register_table_callbacks(app, df: pd.DataFrame):
+# def register_table_callbacks(app, df: pd.DataFrame):
+def register_table_callbacks(app, app_data: pd.DataFrame):
     """
     Register Dash callbacks for the screening table.
 
@@ -501,7 +502,8 @@ def register_table_callbacks(app, df: pd.DataFrame):
     """
     from dash import Input, Output, callback
 
-    prep = prepare_df(df)
+    # prep = prepare_df(df)
+    prep = prepare_df(app_data['df'])
 
     @app.callback(
         Output("screening-table", "data"),
@@ -512,6 +514,7 @@ def register_table_callbacks(app, df: pd.DataFrame):
         Input("tbl-top-n",        "value"),
     )
     def update_table(quadrant, sort_by, top_n):
+        df = app_data['df']   # reads fresh every time callback fires
         filtered = filter_and_sort(prep, quadrant=quadrant,
                                    sort_by=sort_by, top_n=top_n)
         total    = len(prep) if quadrant == "all" else len(
