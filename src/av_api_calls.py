@@ -22,9 +22,8 @@ import time
 import traceback
 sys.tracebacklimit = 0 # turn off the error tracebacks
 
-import option_prem_iv_builder_VI
-import hist_vol_iv_risk_builder_III
-
+import option_prem_iv_builder
+import hist_vol_iv_risk_builder
 
 ### Hardcoded setting up request and params. 
 headers = {'From':'alfhaugen@gmail.com'}
@@ -129,11 +128,11 @@ def option_analysis_scan(ticker_list, api_key, option_date, as_of_date):
     spy_spot = float(spy_daily['Time Series (Daily)'][as_of_date]['4. close'])  ### Grab Spot Price for date
     qqq_spot = float(qqq_daily['Time Series (Daily)'][as_of_date]['4. close'])  ### Grab Spot Price for date
 
-    spy_put  = option_prem_iv_builder_VI.build_premium_buckets(spy_cont_data,  'SPY',  option_date, spy_spot,  'put')
-    qqq_put  = option_prem_iv_builder_VI.build_premium_buckets(qqq_cont_data,  'QQQ',  option_date, qqq_spot,  'put')
+    spy_put  = option_prem_iv_builder.build_premium_buckets(spy_cont_data,  'SPY',  option_date, spy_spot,  'put')
+    qqq_put  = option_prem_iv_builder.build_premium_buckets(qqq_cont_data,  'QQQ',  option_date, qqq_spot,  'put')
 
-    spy_hv_result, _ = hist_vol_iv_risk_builder_III.build_hv_score(spy_daily, spy_put['summary'],  'SPY',  as_of_date)
-    qqq_hv_result, _ = hist_vol_iv_risk_builder_III.build_hv_score(qqq_daily, qqq_put['summary'],  'QQQ',  as_of_date)
+    spy_hv_result, _ = hist_vol_iv_risk_builder.build_hv_score(spy_daily, spy_put['summary'],  'SPY',  as_of_date)
+    qqq_hv_result, _ = hist_vol_iv_risk_builder.build_hv_score(qqq_daily, qqq_put['summary'],  'QQQ',  as_of_date)
 
     spy_hv_30 = float(spy_hv_result['HV_30'].iloc[0])
     qqq_hv_30 = float(qqq_hv_result['HV_30'].iloc[0])
@@ -179,7 +178,7 @@ def option_analysis_scan(ticker_list, api_key, option_date, as_of_date):
         
             ### Build option premium buckets -------------------------------------------
             print("Building Option Premium Data")
-            put_result  = option_prem_iv_builder_VI.build_premium_buckets(
+            put_result  = option_prem_iv_builder.build_premium_buckets(
                 raw_contracts = opt_contracts_data,
                 symbol        = symbol,
                 current_date  = option_date,
@@ -187,7 +186,7 @@ def option_analysis_scan(ticker_list, api_key, option_date, as_of_date):
                 option_type   = 'put',  
             )
             
-            call_result = option_prem_iv_builder_VI.build_premium_buckets(
+            call_result = option_prem_iv_builder.build_premium_buckets(
                 raw_contracts = opt_contracts_data,
                 symbol        = symbol,
                 current_date  = option_date,
@@ -195,15 +194,11 @@ def option_analysis_scan(ticker_list, api_key, option_date, as_of_date):
                 option_type   = 'call',
             )
             
-            # option_premiums = opt_result_temp['summary'].sort_values(['expiration','avg_otm_distance'])
-            # option_flat_premiums = opt_result_temp['flat_summary']
             option_premiums = put_result['summary'].sort_values(['expiration','avg_otm_distance'])
-            # option_flat_premiums = flatten_premium_summary(put_result, prem_units, symbol, option_date)
-            # print(option_flat_premiums)
 
             ### Build HV + Spike Score -> returns flattened single row df ------------------------
             print("Building Historical Vol and Spike Data")
-            hv_flat, hv_vol_outputs = hist_vol_iv_risk_builder_III.build_hv_score(
+            hv_flat, hv_vol_outputs = hist_vol_iv_risk_builder.build_hv_score(
                 av_daily_response = daily_mkt_data,
                 bucket_summary    = option_premiums,
                 symbol            = symbol,
@@ -224,8 +219,8 @@ def option_analysis_scan(ticker_list, api_key, option_date, as_of_date):
                 .to_dict()
             )
             
-            straddle   = option_prem_iv_builder_VI.compute_straddle_premium(put_result['summary'], call_result['summary'])
-            prem_units = option_prem_iv_builder_VI.compute_premium_per_unit_iv(
+            straddle   = option_prem_iv_builder.compute_straddle_premium(put_result['summary'], call_result['summary'])
+            prem_units = option_prem_iv_builder.compute_premium_per_unit_iv(
                              straddle,
                              atm_iv_by_dte = hv_vol_outputs['atm_iv_by_dte'],
                              hv_30         = hv_vol_outputs['current_hv']['HV_30'],
@@ -233,7 +228,7 @@ def option_analysis_scan(ticker_list, api_key, option_date, as_of_date):
                          )
 
             ### Flatten Option Data w/ Straddle -------------------------------------------------------------
-            option_flat_premiums = option_prem_iv_builder_VI.flatten_premium_summary(put_result, 
+            option_flat_premiums = option_prem_iv_builder.flatten_premium_summary(put_result, 
                                                                     prem_units, symbol, option_date, spot)
 
             hv_cols = ['symbol', 'HV_20', 'HV_30', 'HV_60', 'atm_iv_14', 'ratio_14',
