@@ -475,6 +475,7 @@ hist_tab = html.Div(style={"paddingTop": "16px"}, children=[
                     {"label": "Premium Score",         "value": "premium_score"},
                     {"label": "Risk Score",            "value": "risk_score"},
                     # {"label": "HV 20D",                "value": "HV_20"},
+                    {"label": "Implied Vol. Delta (25-40%)",    "value": "iv_slight_30"},
                     {"label": "HV 30D",                "value": "HV_30"},
                     {"label": "HV 60D",                "value": "HV_60"},
                     {"label": "IV/HV Ratio 14D",       "value": "ratio_14"},
