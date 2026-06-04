@@ -16,6 +16,7 @@
 
 > **Active development** — working pipeline scanning ~600 symbols. 
 > Scoring methodology and dashboard under continuous iteration.
+> 
 **Future Improvements:**
 > - **Premium Momentum** — week-over-week regression across the last 5 Wednesday 
 >   scan sessions to compute slope and velocity of premium expansion or contraction 
