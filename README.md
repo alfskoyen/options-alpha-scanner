@@ -28,6 +28,13 @@
 >   entering the high-premium zone and flags symbols with sustained put-selling setups.
 >   
 > **Recent Improvements:**
+> - **Live data reload** — dashboard auto-detects new CSV scoring files and refreshes header meta (date, symbol count) without restart
+> - **Minimum DTE Coverage Filter** — symbols excluded from scoring if fewer than 3 of 5 DTE windows are populated with valid options data, preventing distorted scores for thinly-traded chains with missing expirations
+> - **45-day DTE window** — improves term structure coverage for monthly-only chains (e.g. KLAC, MCHP) where 14-day and 30-day windows may find no liquid expiration
+> - **Weight rescaling in scoring** — when a DTE window is absent, its weight redistributes proportionally across available windows so premium scores remain comparable across liquid and illiquid chains
+> - **Smarter expiration assignment** — `over60_1` and `over60_2` snap to standard monthly expirations beyond 60 and 85 days respectively, filtering non-standard expirations
+> - **Holiday-aware expiration detection** — Thursday settlements accepted when the standard 3rd Friday falls on a market holiday (e.g. Juneteenth June 19 → Thursday June 18)
+> - 
 > - **Live data reload** — dashboard auto-detects new CSV scoring files and refreshes header meta (date, symbol count) without restart.
 > - **Minimum DTE Window Monitoring** - Removal of equity symbols if the metrics across the 5 DTE slots do not populate above the Min parameter value (e.g., requried DTE slots >= 3). This removes scarcely populated symbols from the analysis in cases of missign expriation dates.
 > - **45-day DTE window added** — improves term structure coverage for monthly-only
