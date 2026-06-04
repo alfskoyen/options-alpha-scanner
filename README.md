@@ -34,22 +34,8 @@
 > - **Weight rescaling in scoring** — when a DTE window is absent, its weight redistributes proportionally across available windows so premium scores remain comparable across liquid and illiquid chains
 > - **Smarter expiration assignment** — `over60_1` and `over60_2` snap to standard monthly expirations beyond 60 and 85 days respectively, filtering non-standard expirations
 > - **Holiday-aware expiration detection** — Thursday settlements accepted when the standard 3rd Friday falls on a market holiday (e.g. Juneteenth June 19 → Thursday June 18)
-> - 
-> - **Live data reload** — dashboard auto-detects new CSV scoring files and refreshes header meta (date, symbol count) without restart.
-> - **Minimum DTE Window Monitoring** - Removal of equity symbols if the metrics across the 5 DTE slots do not populate above the Min parameter value (e.g., requried DTE slots >= 3). This removes scarcely populated symbols from the analysis in cases of missign expriation dates.
-> - **45-day DTE window added** — improves term structure coverage for monthly-only
->   chains (e.g. KLAC, MCHP) where 14-day and 30-day windows may find no liquid expiration
-> - **Weight rescaling in scoring** — when a DTE window is absent for a symbol, its
->   weight is redistributed proportionally across available windows so premium scores
->   remain comparable across liquid and illiquid chains
-> - **Smarter expiration assignment** — `over60_1` and `over60_2` now snap to standard
->   monthly expirations (3rd Friday) beyond 60 and 85 days respectively, improving
->   consistency across the universe and filtering out non-standard expirations
-> - **Holiday-aware expiration detection** — expiration identification now accepts
->   Thursday settlements when the standard 3rd Friday falls on a market holiday
->   (e.g. Juneteenth June 19 → Thursday June 18), preventing missed windows on
->   affected symbols
-
+>
+> 
 --- 
 
 ## Option Analytics / Put Option Alpha Analysis and Dashboard Project
