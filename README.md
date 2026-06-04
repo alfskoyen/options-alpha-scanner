@@ -16,6 +16,15 @@
 
 > **Active development** — working pipeline scanning ~600 symbols. 
 > Scoring methodology and dashboard under continuous iteration.
+**Future Improvements:**
+> - **Premium Momentum** — week-over-week regression across the last 5 Wednesday 
+>   scan sessions to compute slope and velocity of premium expansion or contraction 
+>   per symbol. Rising slope signals accelerating market fear or positioning — an 
+>   early indicator ahead of significant moves.
+> - **Scoring Stability & Persistence** — tracking symbols that consistently rank 
+>   in the top 10/20 positions across multiple scan dates, surfacing names with 
+>   durable Q1/Q2 placement vs new entrants. Enables detection of fresh opportunities 
+>   entering the high-premium zone and flags symbols with sustained put-selling setups.
 > **Recent Improvements:**
 > - **Live data reload** — dashboard auto-detects new CSV scoring files and refreshes header meta (date, symbol count) without restart.
 > - **Minimum DTE Window Monitoring** -  Removal of equity symbols if the metrics across the 5 DTE slots do not populate above the Min parameter value (e.g., requried DTE slots >= 3). This removes scarcely populated symbols from the analysis in cases of missign expriation dates.
